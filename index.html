@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAKUZATOU'S SPACE</title>
+    <title>space.</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -35,17 +35,6 @@
             user-select: none;
         }
 
-        /* タップエフェクト用キャンバス (最前面・クリック透過) */
-        #tap-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 9999;
-        }
-
         /* 背景の星空 */
         .stars-container {
             position: fixed;
@@ -63,7 +52,7 @@
         }
         @keyframes twinkle {
             0%, 100% { opacity: 0.15; transform: scale(0.8); }
-            50% { opacity: 0.85; transform: scale(1.1); box-shadow: 0 0 4px #38bdf8; }
+            50% { opacity: 0.85; transform: scale(1.1); box-shadow: 0 0 4px var(--accent-color); }
         }
 
         /* ヘッダー・ナビゲーション */
@@ -131,13 +120,14 @@
         }
 
         .sharp-btn-danger {
-            background: #1f1216;
+            background: #2a0a10;
             border: 1px solid var(--danger-color);
-            color: var(--danger-color);
-            padding: 4px 10px;
-            font-size: 0.75rem;
+            color: #fca5a5;
+            padding: 6px 14px;
+            font-size: 0.8rem;
             font-weight: 700;
             cursor: pointer;
+            transition: all 0.15s;
         }
         .sharp-btn-danger:hover {
             background: var(--danger-color);
@@ -193,14 +183,26 @@
             font-family: monospace;
             display: inline-block;
             letter-spacing: 1px;
-            color: #38bdf8;
+            color: var(--accent-color);
+        }
+
+        /* カラーセレクター */
+        .color-preset {
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.1s;
+        }
+        .color-preset:hover {
+            transform: scale(1.1);
+        }
+        .color-preset.active {
+            border-color: #ffffff;
         }
     </style>
 </head>
 <body class="relative min-h-screen flex flex-col justify-between">
-
-    <!-- ファンパレ風タップエフェクト用 Canvas -->
-    <canvas id="tap-canvas"></canvas>
 
     <!-- 星空背景 -->
     <div class="stars-container" id="stars-container"></div>
@@ -208,8 +210,8 @@
     <!-- ヘッダー -->
     <header class="w-full px-4 py-3 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-4">
-            <h1 class="text-xl font-black tracking-widest text-sky-400 cursor-pointer" onclick="showTab('about')">
-                KAKUZATOU’S SPACE
+            <h1 class="text-2xl font-black tracking-wider text-sky-400 cursor-pointer" id="app-logo" onclick="showTab('about')">
+                space.
             </h1>
             <div class="digital-clock" id="digital-clock" onclick="toggleClock()">
                 <span id="clock-text">--/--/-- --:--</span>
@@ -220,6 +222,7 @@
             <nav class="flex flex-wrap items-center gap-2">
                 <button class="nav-btn active" id="btn-about" onclick="showTab('about')">ABOUT</button>
                 <button class="nav-btn" id="btn-profile" onclick="showTab('profile')">PROFILE</button>
+                <button class="nav-btn" id="btn-builder" onclick="showTab('builder')">BUILDER</button>
                 <button class="nav-btn" id="btn-message" onclick="showTab('message')">COMMENT</button>
                 <button class="nav-btn" id="btn-privacy" onclick="showTab('privacy')">PRIVACY</button>
 
@@ -227,17 +230,15 @@
                 <div id="auth-nav-container" class="ml-2 flex items-center gap-2"></div>
             </nav>
 
-            <!-- 右上のベルマーク（通知＆非表示・消去機能付き） -->
+            <!-- 右上のベルマーク（通知＆非表示機能付き） -->
             <div id="bell-widget" class="relative flex items-center bg-slate-900 border border-slate-700 p-1.5 pl-2.5 pr-1">
                 <button onclick="toggleBellNotification()" title="お知らせ" class="text-sky-400 hover:text-white transition flex items-center gap-1.5 focus:outline-none">
-                    <!-- SVG ベルアイコン -->
                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
                         <path d="M12 22a2.98 2.98 0 0 0 2.818-2H9.182A2.98 2.98 0 0 0 12 22zm7-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C8.64 5.36 7 7.92 7 11v5l-2 2v1h14v-1l-2-2z"/>
                     </svg>
                     <span class="w-2 h-2 bg-sky-400 rounded-full animate-ping"></span>
                 </button>
-                <!-- ベルマーク消去（非表示）ボタン -->
-                <button onclick="dismissBell()" title="ベルマークを消す" class="ml-2 text-slate-500 hover:text-rose-400 px-1 font-bold text-xs focus:outline-none">
+                <button onclick="dismissBell()" title="ベルマークを非表示にする" class="ml-2 text-slate-500 hover:text-rose-400 px-1 font-bold text-xs focus:outline-none">
                     ×
                 </button>
 
@@ -247,7 +248,7 @@
                         <span class="font-bold text-sky-400">NOTIFICATION</span>
                         <button onclick="toggleBellNotification()" class="text-slate-400 hover:text-white">✕</button>
                     </div>
-                    <p class="text-slate-300 leading-relaxed">タップ音・ファンパレ風呪術タップエフェクトが有効化されています。</p>
+                    <p class="text-slate-300 leading-relaxed">「BUILDER」であなた専用のプロフィールを作成・共有できるようになりました。</p>
                 </div>
             </div>
         </div>
@@ -271,13 +272,16 @@
                     <p class="p-3 bg-slate-900/90 border-l-2 border-sky-400">
                         名前は、あるところではkakuzatou、シュガー、また、あるところではNYO、エビフライだったりします。
                     </p>
+                    <p class="p-3 bg-slate-900/90 border-l-2 border-sky-400 font-semibold">
+                        呪術廻戦ネタが好きです。
+                    </p>
                     <p class="p-3 bg-slate-900/90 border-l-2 border-slate-600">
                         詳しくはプロフィールのページへ。
                     </p>
 
                     <div class="pt-4 flex flex-wrap gap-3">
                         <button class="sharp-btn" onclick="showTab('profile')">プロフィールを見る</button>
-                        <button class="sharp-btn" onclick="showTab('message')">コメントを書く</button>
+                        <button class="sharp-btn" onclick="showTab('builder')">自分のプロフィールを作成</button>
                     </div>
                 </div>
             </div>
@@ -285,100 +289,107 @@
 
         <!-- 2. プロフィール (PROFILE) -->
         <section id="tab-profile" class="tab-content">
+            <div class="sharp-card p-6 md:p-10" id="profile-card-container">
+                <!-- JSで動的に表示（デフォルト or カスタムプロフィール） -->
+            </div>
+        </section>
+
+        <!-- 3. プロフィール作成・カスタム (BUILDER) -->
+        <section id="tab-builder" class="tab-content">
             <div class="sharp-card p-6 md:p-10">
-                <div class="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8 pb-6 border-b border-slate-800">
-                    <img src="https://raw.githubusercontent.com/Kakuzatou2012/space./main/IMG_7557.jpeg" 
-                         alt="kakuzatou Avatar" 
-                         class="avatar-square"
-                         onerror="this.src='https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300'">
-                    <div class="text-center md:text-left">
-                        <h2 class="text-2xl font-black text-white tracking-wider">kakuzatou</h2>
-                        <p class="text-sky-400 font-bold text-sm mt-1">Profile</p>
-                    </div>
+                <div class="border-b border-slate-800 pb-3 mb-6">
+                    <span class="text-xs font-bold text-sky-400 tracking-wider">PROFILE BUILDER</span>
+                    <h2 class="text-xl font-black text-white mt-1">プロフィールを作成・カスタマイズ</h2>
+                    <p class="text-xs text-slate-400 mt-1">あなただけのプロフィールを作って専用URLを発行・共有できます。</p>
                 </div>
 
-                <!-- 基本情報 -->
-                <div class="mb-8">
-                    <h3 class="text-xs font-bold text-sky-400 tracking-wider mb-3 border-l-2 border-sky-400 pl-2">基本情報</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
-                            <span class="text-slate-400">誕生日</span>
-                            <span class="font-bold text-slate-200">20<span class="obfuscated" data-length="2"></span>/06/27</span>
-                        </div>
-                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
-                            <span class="text-slate-400">年齢</span>
-                            <span class="font-bold text-slate-200"><span class="obfuscated" data-length="2"></span>歳</span>
-                        </div>
-                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
-                            <span class="text-slate-400">性別</span>
-                            <span class="font-bold text-slate-200"><span class="obfuscated" data-length="2"></span></span>
-                        </div>
-                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
-                            <span class="text-slate-400">血液型</span>
-                            <span class="font-bold text-slate-200">O型</span>
-                        </div>
-                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
-                            <span class="text-slate-400">居住地</span>
-                            <span class="font-bold text-slate-200">地球</span>
-                        </div>
-                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
-                            <span class="text-slate-400">メインアクティビティ</span>
-                            <span class="font-bold text-slate-200">雑談（NARI）</span>
+                <form id="builder-form" class="space-y-6 text-xs">
+                    <!-- テーマカラー選択 -->
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-2">テーマカラー</label>
+                        <div class="flex items-center gap-3" id="theme-color-picker">
+                            <div class="color-preset active" style="background:#38bdf8;" data-color="#38bdf8" title="Sky Blue"></div>
+                            <div class="color-preset" style="background:#a855f7;" data-color="#a855f7" title="Violet"></div>
+                            <div class="color-preset" style="background:#10b981;" data-color="#10b981" title="Emerald"></div>
+                            <div class="color-preset" style="background:#f43f5e;" data-color="#f43f5e" title="Crimson"></div>
+                            <div class="color-preset" style="background:#f59e0b;" data-color="#f59e0b" title="Amber"></div>
+                            <div class="color-preset" style="background:#ec4899;" data-color="#ec4899" title="Rose"></div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 自己紹介 -->
-                <div class="mb-8">
-                    <h3 class="text-xs font-bold text-sky-400 tracking-wider mb-3 border-l-2 border-sky-400 pl-2">自己紹介</h3>
-                    <div class="bg-slate-900/60 p-4 border border-slate-800 space-y-3 text-xs">
-                        <div class="flex justify-between border-b border-slate-800 pb-2">
-                            <span class="text-slate-400">好きな食べ物</span>
-                            <span class="text-slate-200 font-semibold">天津飯</span>
+                    <!-- 基本情報 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">名前 / アカウント名 *</label>
+                            <input type="text" id="build-name" required placeholder="例: kakuzatou" class="sharp-input">
                         </div>
-                        <div class="flex justify-between border-b border-slate-800 pb-2">
-                            <span class="text-slate-400">苦手な食べ物</span>
-                            <span class="text-slate-200 font-semibold">ライスペーパー</span>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">アイコン画像URL</label>
+                            <input type="url" id="build-avatar" placeholder="https://..." class="sharp-input">
                         </div>
-                        <div class="flex justify-between border-b border-slate-800 pb-2">
-                            <span class="text-slate-400">好きな物・事</span>
-                            <span class="text-slate-200 font-semibold">温泉</span>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">生年月日</label>
+                            <input type="text" id="build-birth" placeholder="例: 2005/06/27" class="sharp-input">
                         </div>
-                        <div class="flex justify-between border-b border-slate-800 pb-2">
-                            <span class="text-slate-400">苦手な物・事</span>
-                            <span class="text-slate-200 font-semibold">運動</span>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">年齢</label>
+                            <input type="text" id="build-age" placeholder="例: 18歳" class="sharp-input">
                         </div>
-                        <div class="flex justify-between border-b border-slate-800 pb-2">
-                            <span class="text-slate-400">趣味</span>
-                            <span class="text-slate-200 font-semibold">ビデオゲーム、漫画・アニメ鑑賞、読書、雑談</span>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">性別</label>
+                            <input type="text" id="build-gender" placeholder="例: 非公開 / 男 / 女" class="sharp-input">
                         </div>
-                        <div class="flex justify-between border-b border-slate-800 pb-2">
-                            <span class="text-slate-400">好きなゲーム</span>
-                            <span class="text-slate-200 font-semibold">HOLLOW KNIGHT、僕のヒーローアカデミア ULTRA RUMBLE</span>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">血液型</label>
+                            <input type="text" id="build-blood" placeholder="例: O型" class="sharp-input">
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">好きな漫画・アニメ</span>
-                            <span class="text-slate-200 font-semibold">暗殺教室、僕のヒーローアカデミア</span>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">居住地</label>
+                            <input type="text" id="build-location" placeholder="例: 地球" class="sharp-input">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">メインアクティビティ</label>
+                            <input type="text" id="build-activity" placeholder="例: 雑談" class="sharp-input">
                         </div>
                     </div>
-                </div>
 
-                <!-- リンク -->
-                <div>
-                    <h3 class="text-xs font-bold text-sky-400 tracking-wider mb-3 border-l-2 border-sky-400 pl-2">外部リンク</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <a href="https://nari.oz96.com/" class="sharp-btn text-xs py-2" target="_blank" rel="noopener noreferrer">NARI Top</a>
-                        <a href="https://nari.oz96.com/users/52899eaa4589" class="sharp-btn text-xs py-2" target="_blank" rel="noopener noreferrer">NARI My Page</a>
-                        <a href="https://uwuzu.net/" class="sharp-btn text-xs py-2" target="_blank" rel="noopener noreferrer">UWUZU.net Top</a>
-                        <a href="https://uwuzu.net/@kakuzatou" class="sharp-btn text-xs py-2" target="_blank" rel="noopener noreferrer">UWUZU.net My Page</a>
-                        <a href="https://national-sns.vercel.app/" class="sharp-btn text-xs py-2" target="_blank" rel="noopener noreferrer">national Top</a>
-                        <a href="https://national-sns.vercel.app/#/u/kakuzatou" class="sharp-btn text-xs py-2" target="_blank" rel="noopener noreferrer">national My Page</a>
+                    <!-- カスタム自己紹介項目 (+) -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="font-bold text-slate-300">カスタムプロフィール項目 (好きなもの、趣味など)</label>
+                            <button type="button" class="sharp-btn py-1 px-3 text-xs" onclick="addCustomField()">+ 項目を追加</button>
+                        </div>
+                        <div id="custom-fields-container" class="space-y-2"></div>
+                    </div>
+
+                    <!-- カスタムリンク (+) -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="font-bold text-slate-300">外部リンク</label>
+                            <button type="button" class="sharp-btn py-1 px-3 text-xs" onclick="addCustomLink()">+ リンクを追加</button>
+                        </div>
+                        <div id="custom-links-container" class="space-y-2"></div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-800 flex flex-wrap gap-3">
+                        <button type="submit" class="sharp-btn py-2.5 px-6">プロフィールを作成・URL生成</button>
+                    </div>
+                </form>
+
+                <!-- URL出力エリア -->
+                <div id="generated-url-area" class="hidden mt-6 p-4 bg-slate-900 border border-sky-400">
+                    <p class="font-bold text-sky-400 mb-1">プロフィールURLが生成されました！</p>
+                    <p class="text-slate-400 text-xs mb-3">このURLを共有すると、作成したプロフィールが表示されます。</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="generated-url-input" readonly class="sharp-input font-mono text-xs">
+                        <button class="sharp-btn text-xs py-1.5 px-4 whitespace-nowrap" onclick="copyGeneratedUrl()">URLコピー</button>
+                        <button class="sharp-btn text-xs py-1.5 px-4 whitespace-nowrap" onclick="previewGeneratedProfile()">プレビュー</button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 3. コメント (COMMENT) -->
+        <!-- 4. コメント (COMMENT) -->
         <section id="tab-message" class="tab-content">
             <div class="sharp-card p-6 md:p-10">
                 <div class="border-b border-slate-800 pb-3 mb-6">
@@ -400,10 +411,8 @@
                     </div>
                 </div>
 
-                <!-- 投稿フォーム (ログイン者のみ可) -->
-                <div id="comment-form-container" class="mb-10">
-                    <!-- JSで未ログイン/ログイン済の表示を制御 -->
-                </div>
+                <!-- 投稿フォーム -->
+                <div id="comment-form-container" class="mb-10"></div>
 
                 <!-- コメント一覧 -->
                 <div>
@@ -413,7 +422,7 @@
             </div>
         </section>
 
-        <!-- 4. プライバシーポリシー (PRIVACY) -->
+        <!-- 5. プライバシーポリシー (PRIVACY) -->
         <section id="tab-privacy" class="tab-content">
             <div class="sharp-card p-6 md:p-10">
                 <div class="border-b border-slate-800 pb-3 mb-6">
@@ -440,7 +449,7 @@
             </div>
         </section>
 
-        <!-- 5. アカウント登録・ログインモーダル -->
+        <!-- 6. アカウント登録・ログイン -->
         <section id="tab-auth" class="tab-content">
             <div class="sharp-card p-6 md:p-8 max-w-md mx-auto">
                 <div class="border-b border-slate-800 pb-3 mb-6 text-center">
@@ -484,206 +493,49 @@
 
     </main>
 
-    <!-- フッター -->
+    <!-- フッター (指定の署名) -->
     <footer class="relative z-10 w-full py-4 border-t border-slate-800 bg-slate-950 text-center text-xs text-slate-500 font-mono">
         ©︎kakuzatou
     </footer>
 
     <!-- スクリプト -->
     <script>
-        // --- Web Audio API タップ効果音（ファンパレ風インパクトサウンド） ---
-        let audioCtx = null;
-        function playTapSound() {
-            try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
+        // デフォルトプロフィールデータ
+        const defaultProfile = {
+            name: "kakuzatou",
+            color: "#38bdf8",
+            avatar: "https://raw.githubusercontent.com/Kakuzatou2012/space./main/IMG_7557.jpeg",
+            birth: "20--/06/27",
+            age: "--歳",
+            gender: "--",
+            blood: "O型",
+            location: "地球",
+            activity: "雑談（NARI）",
+            fields: [
+                { label: "好きな食べ物", value: "天津飯" },
+                { label: "苦手な食べ物", value: "ライスペーパー" },
+                { label: "好きな物・事", value: "温泉" },
+                { label: "苦手な物・事", value: "運動" },
+                { label: "趣味", value: "ビデオゲーム、漫画・アニメ鑑賞、読書、雑談" },
+                { label: "好きなゲーム", value: "HOLLOW KNIGHT、僕のヒーローアカデミア ULTRA RUMBLE" },
+                { label: "好きな漫画・アニメ", value: "暗殺教室、僕のヒーローアカデミア、呪術廻戦" }
+            ],
+            links: [
+                { name: "NARI Top", url: "https://nari.oz96.com/" },
+                { name: "NARI My Page", url: "https://nari.oz96.com/users/52899eaa4589" },
+                { name: "UWUZU.net Top", url: "https://uwuzu.net/" },
+                { name: "UWUZU.net My Page", url: "https://uwuzu.net/@kakuzatou" },
+                { name: "national Top", url: "https://national-sns.vercel.app/" },
+                { name: "national My Page", url: "https://national-sns.vercel.app/#/u/kakuzatou" }
+            ]
+        };
 
-                const now = audioCtx.currentTime;
+        let currentProfileData = { ...defaultProfile };
+        let selectedThemeColor = "#38bdf8";
 
-                // 低音インパク打撃音 (サブ)
-                const oscLow = audioCtx.createOscillator();
-                const gainLow = audioCtx.createGain();
-                oscLow.type = 'sine';
-                oscLow.frequency.setValueAtTime(180, now);
-                oscLow.frequency.exponentialRampToValueAtTime(30, now + 0.12);
-                gainLow.gain.setValueAtTime(0.4, now);
-                gainLow.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-                oscLow.connect(gainLow);
-                gainLow.connect(audioCtx.destination);
-                oscLow.start(now);
-                oscLow.stop(now + 0.12);
-
-                // 高音呪力シャープクリック音
-                const oscHigh = audioCtx.createOscillator();
-                const gainHigh = audioCtx.createGain();
-                oscHigh.type = 'triangle';
-                oscHigh.frequency.setValueAtTime(1200, now);
-                oscHigh.frequency.exponentialRampToValueAtTime(300, now + 0.08);
-                gainHigh.gain.setValueAtTime(0.25, now);
-                gainHigh.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-                oscHigh.connect(gainHigh);
-                gainHigh.connect(audioCtx.destination);
-                oscHigh.start(now);
-                oscHigh.stop(now + 0.08);
-            } catch (e) {
-                // AudioContext不可時スルー
-            }
-        }
-
-        // --- ファンパレ風 呪術タップエフェクト Canvas ---
-        const tapCanvas = document.getElementById('tap-canvas');
-        const ctx = tapCanvas.getContext('2d');
-        let particles = [];
-
-        function resizeCanvas() {
-            tapCanvas.width = window.innerWidth;
-            tapCanvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        class EnergyParticle {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.radius = Math.random() * 25 + 10;
-                this.maxRadius = this.radius + Math.random() * 50 + 40;
-                this.angle = Math.random() * Math.PI * 2;
-                this.speed = Math.random() * 6 + 2;
-                this.vx = Math.cos(this.angle) * this.speed;
-                this.vy = Math.sin(this.angle) * this.speed;
-                this.life = 1.0;
-                this.decay = Math.random() * 0.04 + 0.03;
-                this.colorHue = Math.random() < 0.7 ? 195 : 215; // 鮮やかな呪力シアンブルー
-                this.size = Math.random() * 4 + 2;
-            }
-
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.radius += (this.maxRadius - this.radius) * 0.1;
-                this.life -= this.decay;
-            }
-
-            draw(ctx) {
-                if (this.life <= 0) return;
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, this.life);
-
-                // 呪力波紋（波形リング）
-                ctx.strokeStyle = `hsla(${this.colorHue}, 100%, 65%, ${this.life})`;
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.stroke();
-
-                // アクションパーティクル
-                ctx.fillStyle = `hsla(${this.colorHue}, 100%, 75%, ${this.life})`;
-                ctx.beginPath();
-                ctx.arc(this.x + this.vx * 3, this.y + this.vy * 3, this.size, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.restore();
-            }
-        }
-
-        class TapShockwave {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.radius = 5;
-                this.maxRadius = 70;
-                this.life = 1.0;
-                this.rotation = Math.random() * Math.PI;
-            }
-
-            update() {
-                this.radius += (this.maxRadius - this.radius) * 0.2;
-                this.life -= 0.05;
-            }
-
-            draw(ctx) {
-                if (this.life <= 0) return;
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.rotation);
-                ctx.globalAlpha = Math.max(0, this.life);
-
-                // 中央コアエフェクト
-                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
-                grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-                grad.addColorStop(0.3, 'rgba(56, 189, 248, 0.7)');
-                grad.addColorStop(0.7, 'rgba(14, 165, 233, 0.3)');
-                grad.addColorStop(1, 'rgba(5, 8, 20, 0)');
-
-                ctx.fillStyle = grad;
-                ctx.beginPath();
-                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-                ctx.fill();
-
-                // ファンパレ風 閃光ライン
-                ctx.strokeStyle = 'rgba(224, 242, 254, 0.8)';
-                ctx.lineWidth = 2;
-                for (let i = 0; i < 4; i++) {
-                    const ang = (Math.PI / 2) * i;
-                    ctx.beginPath();
-                    ctx.moveTo(Math.cos(ang) * (this.radius * 0.3), Math.sin(ang) * (this.radius * 0.3));
-                    ctx.lineTo(Math.cos(ang) * (this.radius * 1.3), Math.sin(ang) * (this.radius * 1.3));
-                    ctx.stroke();
-                }
-
-                ctx.restore();
-            }
-        }
-
-        function triggerTapEffect(x, y) {
-            playTapSound();
-            particles.push(new TapShockwave(x, y));
-            for (let i = 0; i < 12; i++) {
-                particles.push(new EnergyParticle(x, y));
-            }
-        }
-
-        function renderCanvas() {
-            ctx.clearRect(0, 0, tapCanvas.width, tapCanvas.height);
-            for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update();
-                particles[i].draw(ctx);
-                if (particles[i].life <= 0) {
-                    particles.splice(i, 1);
-                }
-            }
-            requestAnimationFrame(renderCanvas);
-        }
-        renderCanvas();
-
-        // どこでもタップ/クリックリスナー
-        window.addEventListener('pointerdown', (e) => {
-            triggerTapEffect(e.clientX, e.clientY);
-        });
-
-        // --- ベルマーク機能 ---
-        function toggleBellNotification() {
-            const popup = document.getElementById('bell-popup');
-            if (popup) {
-                popup.classList.toggle('hidden');
-            }
-        }
-
-        function dismissBell() {
-            const bellWidget = document.getElementById('bell-widget');
-            if (bellWidget) {
-                bellWidget.style.display = 'none';
-            }
-        }
-
-        // --- 星空生成 ---
+        // --- 星空背景 ---
         const starsContainer = document.getElementById('stars-container');
-        for (let i = 0; i < 65; i++) {
+        for (let i = 0; i < 60; i++) {
             const star = document.createElement('div');
             star.className = 'star';
             const size = Math.random() * 2 + 1;
@@ -696,7 +548,17 @@
             starsContainer.appendChild(star);
         }
 
-        // --- 時計更新 (矢印記号削除) ---
+        // --- ベルマーク非表示 ---
+        function toggleBellNotification() {
+            const popup = document.getElementById('bell-popup');
+            if (popup) popup.classList.toggle('hidden');
+        }
+        function dismissBell() {
+            const bellWidget = document.getElementById('bell-widget');
+            if (bellWidget) bellWidget.style.display = 'none';
+        }
+
+        // --- 時計 ---
         let clockExpanded = true;
         function updateClock() {
             const n = new Date(),
@@ -717,11 +579,10 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // --- §k (Minecraft Obfuscated Text) アニメーション処理 ---
+        // --- §k Obfuscated Text ---
         const obfuscatedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
         function animateObfuscatedText() {
-            const elements = document.querySelectorAll('.obfuscated');
-            elements.forEach(el => {
+            document.querySelectorAll('.obfuscated').forEach(el => {
                 const len = parseInt(el.getAttribute('data-length') || '2', 10);
                 let randomText = '';
                 for (let i = 0; i < len; i++) {
@@ -732,7 +593,7 @@
         }
         setInterval(animateObfuscatedText, 50);
 
-        // --- タブ表示切替 ---
+        // --- タブ切り替え ---
         function showTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -746,9 +607,202 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- 認証機能 (重複チェック付き) ---
-        let isSignUpMode = false;
+        // --- プロフィール描画 (デフォルト & URLパラメータ/カスタム) ---
+        function renderProfileCard(data) {
+            const container = document.getElementById('profile-card-container');
+            const themeColor = data.color || '#38bdf8';
+            document.documentElement.style.setProperty('--accent-color', themeColor);
 
+            let customFieldsHtml = '';
+            if (data.fields && data.fields.length > 0) {
+                customFieldsHtml = `
+                    <div class="mb-8">
+                        <h3 class="text-xs font-bold tracking-wider mb-3 border-l-2 pl-2" style="color:${themeColor}; border-color:${themeColor};">詳細情報</h3>
+                        <div class="bg-slate-900/60 p-4 border border-slate-800 space-y-3 text-xs">
+                            ${data.fields.map(f => `
+                                <div class="flex justify-between border-b border-slate-800 pb-2">
+                                    <span class="text-slate-400">${escapeHtml(f.label)}</span>
+                                    <span class="text-slate-200 font-semibold">${escapeHtml(f.value)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            let linksHtml = '';
+            if (data.links && data.links.length > 0) {
+                linksHtml = `
+                    <div>
+                        <h3 class="text-xs font-bold tracking-wider mb-3 border-l-2 pl-2" style="color:${themeColor}; border-color:${themeColor};">外部リンク</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            ${data.links.map(l => `
+                                <a href="${escapeHtml(l.url)}" class="sharp-btn text-xs py-2" target="_blank" rel="noopener noreferrer">${escapeHtml(l.name)}</a>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8 pb-6 border-b border-slate-800">
+                    <img src="${escapeHtml(data.avatar || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300')}" 
+                         alt="${escapeHtml(data.name)}" 
+                         class="avatar-square"
+                         style="border-color:${themeColor};"
+                         onerror="this.src='https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300'">
+                    <div class="text-center md:text-left">
+                        <h2 class="text-2xl font-black text-white tracking-wider">${escapeHtml(data.name)}</h2>
+                        <p class="font-bold text-sm mt-1" style="color:${themeColor};">Profile</p>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-xs font-bold tracking-wider mb-3 border-l-2 pl-2" style="color:${themeColor}; border-color:${themeColor};">基本情報</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
+                            <span class="text-slate-400">誕生日</span>
+                            <span class="font-bold text-slate-200">${data.birth ? escapeHtml(data.birth) : '<span class="obfuscated" data-length="4"></span>'}</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
+                            <span class="text-slate-400">年齢</span>
+                            <span class="font-bold text-slate-200">${data.age ? escapeHtml(data.age) : '<span class="obfuscated" data-length="2"></span>歳'}</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
+                            <span class="text-slate-400">性別</span>
+                            <span class="font-bold text-slate-200">${data.gender ? escapeHtml(data.gender) : '<span class="obfuscated" data-length="2"></span>'}</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
+                            <span class="text-slate-400">血液型</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.blood || '不明')}</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
+                            <span class="text-slate-400">居住地</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.location || '地球')}</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
+                            <span class="text-slate-400">メインアクティビティ</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.activity || 'なし')}</span>
+                        </div>
+                    </div>
+                </div>
+
+                ${customFieldsHtml}
+                ${linksHtml}
+            `;
+        }
+
+        // --- BUILDER (カスタムプロフィール作成) ---
+        document.querySelectorAll('.color-preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.color-preset').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedThemeColor = btn.getAttribute('data-color');
+            });
+        });
+
+        function addCustomField(label = '', value = '') {
+            const container = document.getElementById('custom-fields-container');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 items-center';
+            div.innerHTML = `
+                <input type="text" placeholder="項目名 (例: 趣味)" value="${escapeHtml(label)}" class="sharp-input w-1/3 build-field-label">
+                <input type="text" placeholder="内容 (例: 読書)" value="${escapeHtml(value)}" class="sharp-input w-2/3 build-field-value">
+                <button type="button" class="sharp-btn-danger py-2 px-3" onclick="this.parentElement.remove()">-</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function addCustomLink(name = '', url = '') {
+            const container = document.getElementById('custom-links-container');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 items-center';
+            div.innerHTML = `
+                <input type="text" placeholder="リンク名" value="${escapeHtml(name)}" class="sharp-input w-1/3 build-link-name">
+                <input type="url" placeholder="URL (https://...)" value="${escapeHtml(url)}" class="sharp-input w-2/3 build-link-url">
+                <button type="button" class="sharp-btn-danger py-2 px-3" onclick="this.parentElement.remove()">-</button>
+            `;
+            container.appendChild(div);
+        }
+
+        // フォーム送信時：URL生成
+        document.getElementById('builder-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const fields = [];
+            document.querySelectorAll('#custom-fields-container > div').forEach(row => {
+                const l = row.querySelector('.build-field-label').value.trim();
+                const v = row.querySelector('.build-field-value').value.trim();
+                if (l && v) fields.push({ label: l, value: v });
+            });
+
+            const links = [];
+            document.querySelectorAll('#custom-links-container > div').forEach(row => {
+                const n = row.querySelector('.build-link-name').value.trim();
+                const u = row.querySelector('.build-link-url').value.trim();
+                if (n && u) links.push({ name: n, url: u });
+            });
+
+            const customData = {
+                name: document.getElementById('build-name').value.trim(),
+                color: selectedThemeColor,
+                avatar: document.getElementById('build-avatar').value.trim(),
+                birth: document.getElementById('build-birth').value.trim(),
+                age: document.getElementById('build-age').value.trim(),
+                gender: document.getElementById('build-gender').value.trim(),
+                blood: document.getElementById('build-blood').value.trim(),
+                location: document.getElementById('build-location').value.trim(),
+                activity: document.getElementById('build-activity').value.trim(),
+                fields: fields,
+                links: links
+            };
+
+            currentProfileData = customData;
+
+            // JSONデータ Base64 エンコードして URL ハッシュ生成
+            const jsonStr = JSON.stringify(customData);
+            const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
+            const fullUrl = `${window.location.origin}${window.location.pathname}#/u/${customData.name || 'user'}?p=${encoded}`;
+
+            document.getElementById('generated-url-input').value = fullUrl;
+            document.getElementById('generated-url-area').classList.remove('hidden');
+
+            renderProfileCard(customData);
+        });
+
+        function copyGeneratedUrl() {
+            const input = document.getElementById('generated-url-input');
+            input.select();
+            document.execCommand('copy');
+            alert('プロフィールURLをクリップボードにコピーしました！');
+        }
+
+        function previewGeneratedProfile() {
+            renderProfileCard(currentProfileData);
+            showTab('profile');
+        }
+
+        // --- URL ハッシュ解析 (共有URLからのプロフィール読み込み) ---
+        function parseUrlHashProfile() {
+            const hash = window.location.hash;
+            if (hash.includes('?p=')) {
+                try {
+                    const encoded = hash.split('?p=')[1];
+                    const jsonStr = decodeURIComponent(escape(atob(decodeURIComponent(encoded))));
+                    const profile = JSON.parse(jsonStr);
+                    currentProfileData = profile;
+                    renderProfileCard(profile);
+                    showTab('profile');
+                    return true;
+                } catch (e) {
+                    // パース失敗時はデフォルト
+                }
+            }
+            renderProfileCard(defaultProfile);
+            return false;
+        }
+
+        // --- ログイン & 赤色ログアウト確認機能 ---
         function getCurrentUser() {
             return localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
         }
@@ -760,7 +814,7 @@
             if (currentUser) {
                 container.innerHTML = `
                     <span class="text-xs text-sky-400 font-bold border border-slate-800 px-3 py-1 bg-slate-900">[ ${escapeHtml(currentUser)} ]</span>
-                    <button class="nav-btn" onclick="handleLogout()">LOGOUT</button>
+                    <button class="sharp-btn-danger" onclick="confirmLogout()">LOGOUT</button>
                 `;
             } else {
                 container.innerHTML = `
@@ -770,6 +824,16 @@
             renderCommentForm();
         }
 
+        function confirmLogout() {
+            if (confirm('本当にログアウトしますか？')) {
+                localStorage.removeItem('currentUser');
+                sessionStorage.removeItem('currentUser');
+                renderAuthNav();
+                showTab('about');
+            }
+        }
+
+        let isSignUpMode = false;
         function openAuthTab() {
             isSignUpMode = false;
             updateAuthFormUI();
@@ -864,13 +928,6 @@
             const errorDiv = document.getElementById('auth-error');
             errorDiv.textContent = msg;
             errorDiv.classList.remove('hidden');
-        }
-
-        function handleLogout() {
-            localStorage.removeItem('currentUser');
-            sessionStorage.removeItem('currentUser');
-            renderAuthNav();
-            showTab('about');
         }
 
         // --- 管理者モード（syokuyounousi） ---
@@ -1052,7 +1109,6 @@
             listEl.innerHTML = html;
         }
 
-        // 管理者: コメント返信
         function promptReply(commentId) {
             if (!isMasterAuthenticated) return;
             const replyBody = prompt('返信内容を入力してください:');
@@ -1076,7 +1132,6 @@
             }
         }
 
-        // 管理者: コメント削除
         function deleteComment(commentId) {
             if (!isMasterAuthenticated) return;
             if (!confirm('このコメントを削除しますか？')) return;
@@ -1087,7 +1142,6 @@
             loadComments();
         }
 
-        // エスケープ関数
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/&/g, "&amp;")
@@ -1101,8 +1155,13 @@
         window.addEventListener('DOMContentLoaded', () => {
             renderAuthNav();
             loadComments();
+            parseUrlHashProfile();
+
+            // 初期カスタム項目デモセットアップ
+            addCustomField('好きな食べ物', '天津飯');
+            addCustomField('趣味', 'ゲーム, 読書');
+            addCustomLink('Twitter / X', 'https://twitter.com');
         });
     </script>
 </body>
 </html>
-```eof
