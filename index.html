@@ -18,7 +18,7 @@
 
         * {
             box-sizing: border-box;
-            border-radius: 0px !important; /* 完全直線的なデザイン */
+            border-radius: 0px !important;
         }
 
         body {
@@ -35,7 +35,6 @@
             user-select: none;
         }
 
-        /* 背景の星空 */
         .stars-container {
             position: fixed;
             top: 0;
@@ -55,7 +54,6 @@
             50% { opacity: 0.85; transform: scale(1.1); box-shadow: 0 0 4px var(--accent-color); }
         }
 
-        /* ヘッダー・ナビゲーション */
         header {
             background: rgba(5, 8, 20, 0.98);
             border-bottom: 2px solid var(--border-color);
@@ -81,7 +79,6 @@
             background: rgba(56, 189, 248, 0.08);
         }
 
-        /* カード構造 */
         .sharp-card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -98,7 +95,6 @@
             background: var(--accent-color);
         }
 
-        /* ボタン */
         .sharp-btn {
             background: #0f172a;
             border: 1px solid var(--accent-color);
@@ -134,7 +130,6 @@
             color: #ffffff;
         }
 
-        /* フォーム要素 */
         .sharp-input {
             background: #080d1a;
             border: 1px solid var(--border-color);
@@ -149,7 +144,6 @@
             border-color: var(--accent-color);
         }
 
-        /* デジタル時計 */
         .digital-clock {
             background: #0b1120;
             border: 1px solid var(--border-color);
@@ -161,7 +155,6 @@
             user-select: none;
         }
 
-        /* アバター */
         .avatar-square {
             width: 120px;
             height: 120px;
@@ -170,7 +163,6 @@
             background: #0b0f19;
         }
 
-        /* タブ切替 */
         .tab-content {
             display: none;
         }
@@ -178,7 +170,6 @@
             display: block;
         }
 
-        /* §k マインクラフト風バグ文字スタイリング */
         .obfuscated {
             font-family: monospace;
             display: inline-block;
@@ -186,7 +177,6 @@
             color: var(--accent-color);
         }
 
-        /* カラーセレクター */
         .color-preset {
             width: 28px;
             height: 28px;
@@ -204,13 +194,11 @@
 </head>
 <body class="relative min-h-screen flex flex-col justify-between">
 
-    <!-- 星空背景 -->
     <div class="stars-container" id="stars-container"></div>
 
-    <!-- ヘッダー -->
     <header class="w-full px-4 py-3 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-4">
-            <h1 class="text-2xl font-black tracking-wider text-sky-400 cursor-pointer" id="app-logo" onclick="showTab('about')">
+            <h1 class="text-2xl font-black tracking-wider text-sky-400 cursor-pointer" onclick="showTab('about')">
                 space.
             </h1>
             <div class="digital-clock" id="digital-clock" onclick="toggleClock()">
@@ -219,18 +207,18 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <nav class="flex flex-wrap items-center gap-2">
+            <!-- ナビゲーションメニュー（動的制御） -->
+            <nav class="flex flex-wrap items-center gap-2" id="main-nav">
                 <button class="nav-btn active" id="btn-about" onclick="showTab('about')">ABOUT</button>
                 <button class="nav-btn" id="btn-profile" onclick="showTab('profile')">PROFILE</button>
+                <div id="dynamic-pages-nav" class="contents"></div>
                 <button class="nav-btn" id="btn-builder" onclick="showTab('builder')">BUILDER</button>
                 <button class="nav-btn" id="btn-message" onclick="showTab('message')">COMMENT</button>
                 <button class="nav-btn" id="btn-privacy" onclick="showTab('privacy')">PRIVACY</button>
 
-                <!-- ログイン/ユーザー枠 -->
                 <div id="auth-nav-container" class="ml-2 flex items-center gap-2"></div>
             </nav>
 
-            <!-- 右上のベルマーク（通知＆非表示機能付き） -->
             <div id="bell-widget" class="relative flex items-center bg-slate-900 border border-slate-700 p-1.5 pl-2.5 pr-1">
                 <button onclick="toggleBellNotification()" title="お知らせ" class="text-sky-400 hover:text-white transition flex items-center gap-1.5 focus:outline-none">
                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -238,34 +226,32 @@
                     </svg>
                     <span class="w-2 h-2 bg-sky-400 rounded-full animate-ping"></span>
                 </button>
-                <button onclick="dismissBell()" title="ベルマークを非表示にする" class="ml-2 text-slate-500 hover:text-rose-400 px-1 font-bold text-xs focus:outline-none">
+                <button onclick="dismissBell()" title="非表示" class="ml-2 text-slate-500 hover:text-rose-400 px-1 font-bold text-xs focus:outline-none">
                     ×
                 </button>
 
-                <!-- お知らせドロップダウンポップアップ -->
                 <div id="bell-popup" class="hidden absolute right-0 top-10 w-64 bg-slate-900 border border-sky-400 p-3 shadow-2xl z-50 text-xs">
                     <div class="flex justify-between items-center border-b border-slate-800 pb-1 mb-2">
                         <span class="font-bold text-sky-400">NOTIFICATION</span>
                         <button onclick="toggleBellNotification()" class="text-slate-400 hover:text-white">✕</button>
                     </div>
-                    <p class="text-slate-300 leading-relaxed">「BUILDER」であなた専用のプロフィールを作成・共有できるようになりました。</p>
+                    <p class="text-slate-300 leading-relaxed">他人のプロフィール閲覧時はBUILDERとCOMMENTが非表示になり、追加ページが閲覧できます。</p>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- メインコンテンツ -->
     <main class="relative z-10 max-w-3xl w-full mx-auto p-4 my-6 flex-grow">
 
-        <!-- 1. kakuzatouについて (ABOUT) -->
+        <!-- 1. ABOUT -->
         <section id="tab-about" class="tab-content active">
             <div class="sharp-card p-6 md:p-10">
                 <div class="border-b border-slate-700 pb-3 mb-6">
                     <span class="text-xs font-bold text-sky-400 tracking-wider">ABOUT</span>
-                    <h2 class="text-xl font-black text-white mt-1">kakuzatouについて</h2>
+                    <h2 class="text-xl font-black text-white mt-1" id="about-title-text">kakuzatouについて</h2>
                 </div>
 
-                <div class="space-y-4 text-slate-200 text-base leading-relaxed">
+                <div class="space-y-4 text-slate-200 text-base leading-relaxed" id="about-content-body">
                     <p class="p-3 bg-slate-900/90 border-l-2 border-slate-600">
                         ずば抜けて得意なこともない、普通すぎる人です。
                     </p>
@@ -279,117 +265,28 @@
                         詳しくはプロフィールのページへ。
                     </p>
 
-                    <div class="pt-4 flex flex-wrap gap-3">
+                    <div class="pt-4 flex flex-wrap gap-3" id="about-action-buttons">
                         <button class="sharp-btn" onclick="showTab('profile')">プロフィールを見る</button>
-                        <button class="sharp-btn" onclick="showTab('builder')">自分のプロフィールを作成</button>
+                        <button class="sharp-btn" id="about-builder-btn" onclick="showTab('builder')">プロフィールを作成・編集</button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 2. プロフィール (PROFILE) -->
+        <!-- 2. PROFILE -->
         <section id="tab-profile" class="tab-content">
-            <div class="sharp-card p-6 md:p-10" id="profile-card-container">
-                <!-- JSで動的に表示（デフォルト or カスタムプロフィール） -->
-            </div>
+            <div class="sharp-card p-6 md:p-10" id="profile-card-container"></div>
         </section>
 
-        <!-- 3. プロフィール作成・カスタム (BUILDER) -->
+        <!-- 動的追加ページ用のコンテナ挿入場所 -->
+        <div id="dynamic-pages-container"></div>
+
+        <!-- 3. BUILDER -->
         <section id="tab-builder" class="tab-content">
-            <div class="sharp-card p-6 md:p-10">
-                <div class="border-b border-slate-800 pb-3 mb-6">
-                    <span class="text-xs font-bold text-sky-400 tracking-wider">PROFILE BUILDER</span>
-                    <h2 class="text-xl font-black text-white mt-1">プロフィールを作成・カスタマイズ</h2>
-                    <p class="text-xs text-slate-400 mt-1">あなただけのプロフィールを作って専用URLを発行・共有できます。</p>
-                </div>
-
-                <form id="builder-form" class="space-y-6 text-xs">
-                    <!-- テーマカラー選択 -->
-                    <div>
-                        <label class="block font-bold text-slate-300 mb-2">テーマカラー</label>
-                        <div class="flex items-center gap-3" id="theme-color-picker">
-                            <div class="color-preset active" style="background:#38bdf8;" data-color="#38bdf8" title="Sky Blue"></div>
-                            <div class="color-preset" style="background:#a855f7;" data-color="#a855f7" title="Violet"></div>
-                            <div class="color-preset" style="background:#10b981;" data-color="#10b981" title="Emerald"></div>
-                            <div class="color-preset" style="background:#f43f5e;" data-color="#f43f5e" title="Crimson"></div>
-                            <div class="color-preset" style="background:#f59e0b;" data-color="#f59e0b" title="Amber"></div>
-                            <div class="color-preset" style="background:#ec4899;" data-color="#ec4899" title="Rose"></div>
-                        </div>
-                    </div>
-
-                    <!-- 基本情報 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">名前 / アカウント名 *</label>
-                            <input type="text" id="build-name" required placeholder="例: kakuzatou" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">アイコン画像URL</label>
-                            <input type="url" id="build-avatar" placeholder="https://..." class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">生年月日</label>
-                            <input type="text" id="build-birth" placeholder="例: 2005/06/27" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">年齢</label>
-                            <input type="text" id="build-age" placeholder="例: 18歳" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">性別</label>
-                            <input type="text" id="build-gender" placeholder="例: 非公開 / 男 / 女" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">血液型</label>
-                            <input type="text" id="build-blood" placeholder="例: O型" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">居住地</label>
-                            <input type="text" id="build-location" placeholder="例: 地球" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">メインアクティビティ</label>
-                            <input type="text" id="build-activity" placeholder="例: 雑談" class="sharp-input">
-                        </div>
-                    </div>
-
-                    <!-- カスタム自己紹介項目 (+) -->
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="font-bold text-slate-300">カスタムプロフィール項目 (好きなもの、趣味など)</label>
-                            <button type="button" class="sharp-btn py-1 px-3 text-xs" onclick="addCustomField()">+ 項目を追加</button>
-                        </div>
-                        <div id="custom-fields-container" class="space-y-2"></div>
-                    </div>
-
-                    <!-- カスタムリンク (+) -->
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="font-bold text-slate-300">外部リンク</label>
-                            <button type="button" class="sharp-btn py-1 px-3 text-xs" onclick="addCustomLink()">+ リンクを追加</button>
-                        </div>
-                        <div id="custom-links-container" class="space-y-2"></div>
-                    </div>
-
-                    <div class="pt-4 border-t border-slate-800 flex flex-wrap gap-3">
-                        <button type="submit" class="sharp-btn py-2.5 px-6">プロフィールを作成・URL生成</button>
-                    </div>
-                </form>
-
-                <!-- URL出力エリア -->
-                <div id="generated-url-area" class="hidden mt-6 p-4 bg-slate-900 border border-sky-400">
-                    <p class="font-bold text-sky-400 mb-1">プロフィールURLが生成されました！</p>
-                    <p class="text-slate-400 text-xs mb-3">このURLを共有すると、作成したプロフィールが表示されます。</p>
-                    <div class="flex gap-2">
-                        <input type="text" id="generated-url-input" readonly class="sharp-input font-mono text-xs">
-                        <button class="sharp-btn text-xs py-1.5 px-4 whitespace-nowrap" onclick="copyGeneratedUrl()">URLコピー</button>
-                        <button class="sharp-btn text-xs py-1.5 px-4 whitespace-nowrap" onclick="previewGeneratedProfile()">プレビュー</button>
-                    </div>
-                </div>
-            </div>
+            <div class="sharp-card p-6 md:p-10" id="builder-card-wrapper"></div>
         </section>
 
-        <!-- 4. コメント (COMMENT) -->
+        <!-- 4. COMMENT -->
         <section id="tab-message" class="tab-content">
             <div class="sharp-card p-6 md:p-10">
                 <div class="border-b border-slate-800 pb-3 mb-6">
@@ -397,7 +294,6 @@
                     <h2 class="text-xl font-black text-white mt-1">コメント機能</h2>
                 </div>
 
-                <!-- 管理者モード（鍵入力）エリア -->
                 <div class="mb-6 p-4 bg-slate-900/90 border border-slate-800 text-xs">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div>
@@ -411,10 +307,8 @@
                     </div>
                 </div>
 
-                <!-- 投稿フォーム -->
                 <div id="comment-form-container" class="mb-10"></div>
 
-                <!-- コメント一覧 -->
                 <div>
                     <h3 class="text-xs font-bold text-sky-400 tracking-wider mb-4 border-l-2 border-sky-400 pl-2">コメント一覧</h3>
                     <div id="comments-list" class="space-y-4"></div>
@@ -422,7 +316,7 @@
             </div>
         </section>
 
-        <!-- 5. プライバシーポリシー (PRIVACY) -->
+        <!-- 5. PRIVACY -->
         <section id="tab-privacy" class="tab-content">
             <div class="sharp-card p-6 md:p-10">
                 <div class="border-b border-slate-800 pb-3 mb-6">
@@ -433,23 +327,13 @@
                 <div class="space-y-5 text-xs text-slate-300 leading-relaxed">
                     <section>
                         <h3 class="text-sm font-bold text-white mb-2">1. 情報の収集と保持</h3>
-                        <p>当サイトでは、ユーザー認証状態および投稿されたコメントデータの保持のために、お使いのブラウザのローカルストレージ（localStorage）またはセッションストレージ（sessionStorage）を使用します。</p>
-                    </section>
-
-                    <section>
-                        <h3 class="text-sm font-bold text-white mb-2">2. コメントの公開範囲について</h3>
-                        <p>「パブリック」で投稿されたコメントは誰でも閲覧可能です。「プライベート」で投稿されたコメントは、特定の管理パスワードを認識した閲覧者のみに限定して表示されます。</p>
-                    </section>
-
-                    <section>
-                        <h3 class="text-sm font-bold text-white mb-2">3. 免責事項</h3>
-                        <p>当サイトからリンクされている外部サイトで発生したいかなるトラブルや損害についても、当方は一切の責任を負いません。</p>
+                        <p>当サイトではローカルストレージを使用してデータを保持します。</p>
                     </section>
                 </div>
             </div>
         </section>
 
-        <!-- 6. アカウント登録・ログイン -->
+        <!-- 6. AUTH -->
         <section id="tab-auth" class="tab-content">
             <div class="sharp-card p-6 md:p-8 max-w-md mx-auto">
                 <div class="border-b border-slate-800 pb-3 mb-6 text-center">
@@ -475,7 +359,7 @@
 
                     <div class="flex items-center gap-2 pt-1">
                         <input type="checkbox" id="auth-remember" class="accent-sky-400 w-4 h-4 cursor-pointer">
-                        <label for="auth-remember" class="text-slate-300 cursor-pointer select-none">ログイン維持（情報を記憶する）</label>
+                        <label for="auth-remember" class="text-slate-300 cursor-pointer select-none">ログイン維持</label>
                     </div>
 
                     <div id="auth-error" class="text-xs text-rose-400 font-bold hidden"></div>
@@ -493,47 +377,39 @@
 
     </main>
 
-    <!-- フッター (指定の署名) -->
     <footer class="relative z-10 w-full py-4 border-t border-slate-800 bg-slate-950 text-center text-xs text-slate-500 font-mono">
         ©︎kakuzatou
     </footer>
 
-    <!-- スクリプト -->
     <script>
-        // デフォルトプロフィールデータ
         const defaultProfile = {
             name: "kakuzatou",
             color: "#38bdf8",
             avatar: "https://raw.githubusercontent.com/Kakuzatou2012/space./main/IMG_7557.jpeg",
-            birth: "20--/06/27",
-            age: "--歳",
-            gender: "--",
-            blood: "O型",
+            birth: "1111/1/1",
+            age: "天才",
+            gender: "神",
+            blood: "クワガタ",
             location: "地球",
             activity: "雑談（NARI）",
             fields: [
                 { label: "好きな食べ物", value: "天津飯" },
                 { label: "苦手な食べ物", value: "ライスペーパー" },
-                { label: "好きな物・事", value: "温泉" },
-                { label: "苦手な物・事", value: "運動" },
-                { label: "趣味", value: "ビデオゲーム、漫画・アニメ鑑賞、読書、雑談" },
-                { label: "好きなゲーム", value: "HOLLOW KNIGHT、僕のヒーローアカデミア ULTRA RUMBLE" },
+                { label: "趣味", value: "ビデオゲーム、漫画・アニメ鑑賞" },
                 { label: "好きな漫画・アニメ", value: "暗殺教室、僕のヒーローアカデミア、呪術廻戦" }
             ],
             links: [
-                { name: "NARI Top", url: "https://nari.oz96.com/" },
-                { name: "NARI My Page", url: "https://nari.oz96.com/users/52899eaa4589" },
-                { name: "UWUZU.net Top", url: "https://uwuzu.net/" },
-                { name: "UWUZU.net My Page", url: "https://uwuzu.net/@kakuzatou" },
-                { name: "national Top", url: "https://national-sns.vercel.app/" },
-                { name: "national My Page", url: "https://national-sns.vercel.app/#/u/kakuzatou" }
+                { name: "NARI Top", url: "https://nari.oz96.com/" }
+            ],
+            extraPages: [
+                { title: "お知らせ", content: "ようこそ。こちらは追加ページのサンプルです。" }
             ]
         };
 
         let currentProfileData = { ...defaultProfile };
         let selectedThemeColor = "#38bdf8";
+        let isViewingOtherProfile = false;
 
-        // --- 星空背景 ---
         const starsContainer = document.getElementById('stars-container');
         for (let i = 0; i < 60; i++) {
             const star = document.createElement('div');
@@ -548,7 +424,6 @@
             starsContainer.appendChild(star);
         }
 
-        // --- ベルマーク非表示 ---
         function toggleBellNotification() {
             const popup = document.getElementById('bell-popup');
             if (popup) popup.classList.toggle('hidden');
@@ -558,7 +433,6 @@
             if (bellWidget) bellWidget.style.display = 'none';
         }
 
-        // --- 時計 ---
         let clockExpanded = true;
         function updateClock() {
             const n = new Date(),
@@ -579,7 +453,6 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // --- §k Obfuscated Text ---
         const obfuscatedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
         function animateObfuscatedText() {
             document.querySelectorAll('.obfuscated').forEach(el => {
@@ -593,7 +466,6 @@
         }
         setInterval(animateObfuscatedText, 50);
 
-        // --- タブ切り替え ---
         function showTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -604,10 +476,84 @@
             if (targetTab) targetTab.classList.add('active');
             if (targetBtn) targetBtn.classList.add('active');
 
+            if (tabName === 'builder') {
+                renderBuilderTab();
+            }
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- プロフィール描画 (デフォルト & URLパラメータ/カスタム) ---
+        // --- ナビゲーションの動的制御（他人のプロフィールのときはBUILDER/COMMENTを隠す） ---
+        function updateNavigationUI() {
+            const builderBtn = document.getElementById('btn-builder');
+            const commentBtn = document.getElementById('btn-message');
+            const aboutBuilderBtn = document.getElementById('about-builder-btn');
+
+            if (isViewingOtherProfile) {
+                if (builderBtn) builderBtn.style.display = 'none';
+                if (commentBtn) commentBtn.style.display = 'none';
+                if (aboutBuilderBtn) aboutBuilderBtn.style.display = 'none';
+            } else {
+                if (builderBtn) builderBtn.style.display = 'inline-block';
+                if (commentBtn) commentBtn.style.display = 'inline-block';
+                if (aboutBuilderBtn) aboutBuilderBtn.style.display = 'inline-block';
+            }
+        }
+
+        // --- 追加ページ (最大5つ) のナビゲーション＆コンテンツ描画 ---
+        function renderExtraPages(extraPages) {
+            const navContainer = document.getElementById('dynamic-pages-nav');
+            const contentContainer = document.getElementById('dynamic-pages-container');
+
+            navContainer.innerHTML = '';
+            contentContainer.innerHTML = '';
+
+            if (!extraPages || extraPages.length === 0) return;
+
+            extraPages.forEach((page, index) => {
+                const tabId = `extra-page-${index}`;
+                
+                // ナビボタン生成
+                const btn = document.createElement('button');
+                btn.className = 'nav-btn';
+                btn.id = `btn-${tabId}`;
+                btn.textContent = page.title || `ページ${index + 1}`;
+                btn.onclick = () => showExtraTab(tabId);
+                navContainer.appendChild(btn);
+
+                // コンテンツセクション生成
+                const section = document.createElement('section');
+                section.id = `tab-${tabId}`;
+                section.className = 'tab-content';
+                section.innerHTML = `
+                    <div class="sharp-card p-6 md:p-10">
+                        <div class="border-b border-slate-700 pb-3 mb-6">
+                            <span class="text-xs font-bold tracking-wider" style="color:var(--accent-color);">PAGE</span>
+                            <h2 class="text-xl font-black text-white mt-1">${escapeHtml(page.title)}</h2>
+                        </div>
+                        <div class="space-y-4 text-slate-200 text-sm leading-relaxed whitespace-pre-wrap bg-slate-900/60 p-5 border border-slate-800">
+                            ${escapeHtml(page.content)}
+                        </div>
+                    </div>
+                `;
+                contentContainer.appendChild(section);
+            });
+        }
+
+        function showExtraTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            const targetBtn = document.getElementById(`btn-${tabId}`);
+
+            if (targetTab) targetTab.classList.add('active');
+            if (targetBtn) targetBtn.classList.add('active');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- プロフィール描画 ---
         function renderProfileCard(data) {
             const container = document.getElementById('profile-card-container');
             const themeColor = data.color || '#38bdf8';
@@ -646,7 +592,7 @@
 
             container.innerHTML = `
                 <div class="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8 pb-6 border-b border-slate-800">
-                    <img src="${escapeHtml(data.avatar || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300')}" 
+                    <img src="${escapeHtml(data.avatar || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300')" 
                          alt="${escapeHtml(data.name)}" 
                          class="avatar-square"
                          style="border-color:${themeColor};"
@@ -662,27 +608,27 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">誕生日</span>
-                            <span class="font-bold text-slate-200">${data.birth ? escapeHtml(data.birth) : '<span class="obfuscated" data-length="4"></span>'}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.birth || '')}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">年齢</span>
-                            <span class="font-bold text-slate-200">${data.age ? escapeHtml(data.age) : '<span class="obfuscated" data-length="2"></span>歳'}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.age || '')}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">性別</span>
-                            <span class="font-bold text-slate-200">${data.gender ? escapeHtml(data.gender) : '<span class="obfuscated" data-length="2"></span>'}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.gender || '')}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">血液型</span>
-                            <span class="font-bold text-slate-200">${escapeHtml(data.blood || '不明')}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.blood || '')}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">居住地</span>
-                            <span class="font-bold text-slate-200">${escapeHtml(data.location || '地球')}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.location || '')}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">メインアクティビティ</span>
-                            <span class="font-bold text-slate-200">${escapeHtml(data.activity || 'なし')}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.activity || '')}</span>
                         </div>
                     </div>
                 </div>
@@ -690,44 +636,208 @@
                 ${customFieldsHtml}
                 ${linksHtml}
             `;
+
+            renderExtraPages(data.extraPages);
+            updateNavigationUI();
         }
 
-        // --- BUILDER (カスタムプロフィール作成) ---
-        document.querySelectorAll('.color-preset').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.color-preset').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                selectedThemeColor = btn.getAttribute('data-color');
-            });
-        });
+        // --- BUILDER タブ描画 ---
+        let uploadedAvatarBase64 = "";
 
-        function addCustomField(label = '', value = '') {
+        function renderBuilderTab() {
+            const wrapper = document.getElementById('builder-card-wrapper');
+            const currentUser = getCurrentUser();
+
+            if (!currentUser) {
+                wrapper.innerHTML = `
+                    <div class="text-center py-12 space-y-4">
+                        <h2 class="text-xl font-black text-white">ログインが必要です</h2>
+                        <p class="text-xs text-slate-400">プロフィールを作成・編集するには、アカウントにログインしてください。</p>
+                        <button class="sharp-btn" onclick="openAuthTab()">新規登録 / ログインへ</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const savedProfileKey = 'user_profile_' + currentUser;
+            const existingData = JSON.parse(localStorage.getItem(savedProfileKey) || JSON.stringify(defaultProfile));
+            currentProfileData = existingData;
+            selectedThemeColor = existingData.color || '#38bdf8';
+            uploadedAvatarBase64 = existingData.avatar || '';
+
+            wrapper.innerHTML = `
+                <div class="border-b border-slate-800 pb-3 mb-6">
+                    <span class="text-xs font-bold text-sky-400 tracking-wider">PROFILE BUILDER</span>
+                    <h2 class="text-xl font-black text-white mt-1">プロフィール編集 (${escapeHtml(currentUser)})</h2>
+                    <p class="text-xs text-slate-400 mt-1">追加ページ（最大5つ）やテーマカラーを設定して共有URLを発行できます。</p>
+                </div>
+
+                <form id="builder-form" class="space-y-6 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-2">テーマカラー</label>
+                        <div class="flex items-center gap-3" id="theme-color-picker">
+                            <div class="color-preset ${selectedThemeColor==='#38bdf8'?'active':''}" style="background:#38bdf8;" data-color="#38bdf8"></div>
+                            <div class="color-preset ${selectedThemeColor==='#a855f7'?'active':''}" style="background:#a855f7;" data-color="#a855f7"></div>
+                            <div class="color-preset ${selectedThemeColor==='#10b981'?'active':''}" style="background:#10b981;" data-color="#10b981"></div>
+                            <div class="color-preset ${selectedThemeColor==='#f43f5e'?'active':''}" style="background:#f43f5e;" data-color="#f43f5e"></div>
+                            <div class="color-preset ${selectedThemeColor==='#f59e0b'?'active':''}" style="background:#f59e0b;" data-color="#f59e0b"></div>
+                            <div class="color-preset ${selectedThemeColor==='#ec4899'?'active':''}" style="background:#ec4899;" data-color="#ec4899"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">名前 / アカウント名 *</label>
+                            <input type="text" id="build-name" required value="${escapeHtml(existingData.name || currentUser)}" class="sharp-input">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">アイコン画像ファイル添付</label>
+                            <input type="file" id="build-avatar-file" accept="image/*" class="sharp-input text-xs py-1.5" onchange="handleImageUpload(event)">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">生年月日</label>
+                            <input type="text" id="build-birth" value="${escapeHtml(existingData.birth || '1111/1/1')}" class="sharp-input">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">年齢</label>
+                            <input type="text" id="build-age" value="${escapeHtml(existingData.age || '天才')}" class="sharp-input">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">性別</label>
+                            <input type="text" id="build-gender" value="${escapeHtml(existingData.gender || '神')}" class="sharp-input">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">血液型</label>
+                            <input type="text" id="build-blood" value="${escapeHtml(existingData.blood || 'クワガタ')}" class="sharp-input">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">居住地</label>
+                            <input type="text" id="build-location" value="${escapeHtml(existingData.location || '地球')}" class="sharp-input">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">メインアクティビティ</label>
+                            <input type="text" id="build-activity" value="${escapeHtml(existingData.activity || '雑談')}" class="sharp-input">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="font-bold text-slate-300">カスタムプロフィール項目</label>
+                            <button type="button" class="sharp-btn py-1 px-3 text-xs" onclick="addCustomFieldRow()">+ 項目を追加</button>
+                        </div>
+                        <div id="custom-fields-container" class="space-y-2"></div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="font-bold text-slate-300">外部リンク</label>
+                            <button type="button" class="sharp-btn py-1 px-3 text-xs" onclick="addCustomLinkRow()">+ リンクを追加</button>
+                        </div>
+                        <div id="custom-links-container" class="space-y-2"></div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="font-bold text-slate-300">追加ページ作成 (上限5つ)</label>
+                            <button type="button" class="sharp-btn py-1 px-3 text-xs" onclick="addExtraPageRow()">+ ページを追加</button>
+                        </div>
+                        <div id="extra-pages-container" class="space-y-4"></div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-800 flex flex-wrap gap-3">
+                        <button type="submit" class="sharp-btn py-2.5 px-6">プロフィールを保存してURLを自動コピー</button>
+                    </div>
+                </form>
+
+                <div id="generated-url-area" class="hidden mt-6 p-4 bg-slate-900 border border-sky-400">
+                    <p class="font-bold text-sky-400 mb-1">プロフィールURLが自動コピーされました！</p>
+                    <p class="text-slate-400 text-xs mb-3">このURLをそのままチャット等に貼り付けて共有できます。</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="generated-url-input" readonly class="sharp-input font-mono text-xs">
+                        <button class="sharp-btn text-xs py-1.5 px-4 whitespace-nowrap" onclick="copyGeneratedUrl()">再コピー</button>
+                        <button class="sharp-btn text-xs py-1.5 px-4 whitespace-nowrap" onclick="previewGeneratedProfile()">プレビュー</button>
+                    </div>
+                </div>
+            `;
+
+            document.querySelectorAll('.color-preset').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.color-preset').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedThemeColor = btn.getAttribute('data-color');
+                });
+            });
+
+            if (existingData.fields) {
+                existingData.fields.forEach(f => addCustomFieldRow(f.label, f.value));
+            }
+            if (existingData.links) {
+                existingData.links.forEach(l => addCustomLinkRow(l.name, l.url));
+            }
+            if (existingData.extraPages) {
+                existingData.extraPages.forEach(p => addExtraPageRow(p.title, p.content));
+            }
+
+            document.getElementById('builder-form').addEventListener('submit', handleBuilderSubmit);
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedAvatarBase64 = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function addCustomFieldRow(label = '', value = '') {
             const container = document.getElementById('custom-fields-container');
             const div = document.createElement('div');
             div.className = 'flex gap-2 items-center';
             div.innerHTML = `
-                <input type="text" placeholder="項目名 (例: 趣味)" value="${escapeHtml(label)}" class="sharp-input w-1/3 build-field-label">
-                <input type="text" placeholder="内容 (例: 読書)" value="${escapeHtml(value)}" class="sharp-input w-2/3 build-field-value">
+                <input type="text" placeholder="項目名" value="${escapeHtml(label)}" class="sharp-input w-1/3 build-field-label">
+                <input type="text" placeholder="内容" value="${escapeHtml(value)}" class="sharp-input w-2/3 build-field-value">
                 <button type="button" class="sharp-btn-danger py-2 px-3" onclick="this.parentElement.remove()">-</button>
             `;
             container.appendChild(div);
         }
 
-        function addCustomLink(name = '', url = '') {
+        function addCustomLinkRow(name = '', url = '') {
             const container = document.getElementById('custom-links-container');
             const div = document.createElement('div');
             div.className = 'flex gap-2 items-center';
             div.innerHTML = `
                 <input type="text" placeholder="リンク名" value="${escapeHtml(name)}" class="sharp-input w-1/3 build-link-name">
-                <input type="url" placeholder="URL (https://...)" value="${escapeHtml(url)}" class="sharp-input w-2/3 build-link-url">
+                <input type="url" placeholder="URL" value="${escapeHtml(url)}" class="sharp-input w-2/3 build-link-url">
                 <button type="button" class="sharp-btn-danger py-2 px-3" onclick="this.parentElement.remove()">-</button>
             `;
             container.appendChild(div);
         }
 
-        // フォーム送信時：URL生成
-        document.getElementById('builder-form').addEventListener('submit', function (e) {
+        function addExtraPageRow(title = '', content = '') {
+            const container = document.getElementById('extra-pages-container');
+            const currentCount = container.querySelectorAll('.extra-page-row').length;
+            if (currentCount >= 5) {
+                alert('追加ページは最大5つまでです。');
+                return;
+            }
+            const div = document.createElement('div');
+            div.className = 'extra-page-row bg-slate-900/80 p-3 border border-slate-800 space-y-2';
+            div.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <input type="text" placeholder="ページタイトル (例: ブログ)" value="${escapeHtml(title)}" class="sharp-input w-3/4 extra-page-title text-xs font-bold">
+                    <button type="button" class="sharp-btn-danger py-1 px-3 text-xs" onclick="this.closest('.extra-page-row').remove()">削除</button>
+                </div>
+                <textarea placeholder="ページ本文..." rows="3" class="sharp-input extra-page-content text-xs resize-y">${escapeHtml(content)}</textarea>
+            `;
+            container.appendChild(div);
+        }
+
+        function handleBuilderSubmit(e) {
             e.preventDefault();
+            const currentUser = getCurrentUser();
+            if (!currentUser) return;
 
             const fields = [];
             document.querySelectorAll('#custom-fields-container > div').forEach(row => {
@@ -743,10 +853,17 @@
                 if (n && u) links.push({ name: n, url: u });
             });
 
+            const extraPages = [];
+            document.querySelectorAll('#extra-pages-container > .extra-page-row').forEach(row => {
+                const t = row.querySelector('.extra-page-title').value.trim();
+                const c = row.querySelector('.extra-page-content').value.trim();
+                if (t) extraPages.push({ title: t, content: c });
+            });
+
             const customData = {
                 name: document.getElementById('build-name').value.trim(),
                 color: selectedThemeColor,
-                avatar: document.getElementById('build-avatar').value.trim(),
+                avatar: uploadedAvatarBase64 || defaultProfile.avatar,
                 birth: document.getElementById('build-birth').value.trim(),
                 age: document.getElementById('build-age').value.trim(),
                 gender: document.getElementById('build-gender').value.trim(),
@@ -754,27 +871,32 @@
                 location: document.getElementById('build-location').value.trim(),
                 activity: document.getElementById('build-activity').value.trim(),
                 fields: fields,
-                links: links
+                links: links,
+                extraPages: extraPages
             };
 
             currentProfileData = customData;
+            localStorage.setItem('user_profile_' + currentUser, JSON.stringify(customData));
 
-            // JSONデータ Base64 エンコードして URL ハッシュ生成
             const jsonStr = JSON.stringify(customData);
             const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
-            const fullUrl = `${window.location.origin}${window.location.pathname}#/u/${customData.name || 'user'}?p=${encoded}`;
+            const fullUrl = `${window.location.origin}${window.location.pathname}#/u/${customData.name}?p=${encoded}`;
 
             document.getElementById('generated-url-input').value = fullUrl;
             document.getElementById('generated-url-area').classList.remove('hidden');
 
+            // 自動でクリップボードにコピー
+            navigator.clipboard.writeText(fullUrl).catch(() => {});
+
             renderProfileCard(customData);
-        });
+            alert('プロフィールを保存し、共有用URLを自動コピーしました！');
+        }
 
         function copyGeneratedUrl() {
             const input = document.getElementById('generated-url-input');
             input.select();
             document.execCommand('copy');
-            alert('プロフィールURLをクリップボードにコピーしました！');
+            alert('URLをコピーしました！');
         }
 
         function previewGeneratedProfile() {
@@ -782,7 +904,6 @@
             showTab('profile');
         }
 
-        // --- URL ハッシュ解析 (共有URLからのプロフィール読み込み) ---
         function parseUrlHashProfile() {
             const hash = window.location.hash;
             if (hash.includes('?p=')) {
@@ -791,18 +912,18 @@
                     const jsonStr = decodeURIComponent(escape(atob(decodeURIComponent(encoded))));
                     const profile = JSON.parse(jsonStr);
                     currentProfileData = profile;
+                    isViewingOtherProfile = true;
                     renderProfileCard(profile);
                     showTab('profile');
                     return true;
-                } catch (e) {
-                    // パース失敗時はデフォルト
-                }
+                } catch (e) {}
             }
+            isViewingOtherProfile = false;
             renderProfileCard(defaultProfile);
             return false;
         }
 
-        // --- ログイン & 赤色ログアウト確認機能 ---
+        // --- 認証 & ログアウト ---
         function getCurrentUser() {
             return localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
         }
@@ -822,6 +943,7 @@
                 `;
             }
             renderCommentForm();
+            updateNavigationUI();
         }
 
         function confirmLogout() {
@@ -887,7 +1009,7 @@
 
             if (isSignUpMode) {
                 if (users[username]) {
-                    showAuthError('エラー: このユーザー名は既に存在します。別の名前を入力してください。');
+                    showAuthError('エラー: このユーザー名は既に存在します。');
                     return;
                 }
                 if (password !== passwordConfirm) {
@@ -930,9 +1052,8 @@
             errorDiv.classList.remove('hidden');
         }
 
-        // --- 管理者モード（syokuyounousi） ---
+        // --- 管理者モード ---
         let isMasterAuthenticated = false;
-
         function verifyMasterKey() {
             const keyInput = document.getElementById('master-key-input').value;
             const badge = document.getElementById('master-status-badge');
@@ -942,14 +1063,13 @@
                 badge.textContent = '認証済み (管理者)';
                 badge.className = 'ml-2 px-2 py-0.5 bg-sky-900 text-sky-200 font-bold';
                 document.getElementById('master-key-input').value = '';
-                alert('認証に成功しました。非公開コメントの閲覧・返信・削除が可能です。');
+                alert('認証成功');
                 loadComments();
             } else {
-                alert('パスワードが正しくありません。');
+                alert('パスワードが違います');
             }
         }
 
-        // --- コメント機能 ---
         function renderCommentForm() {
             const container = document.getElementById('comment-form-container');
             const currentUser = getCurrentUser();
@@ -957,8 +1077,8 @@
             if (!currentUser) {
                 container.innerHTML = `
                     <div class="p-6 bg-slate-900/80 border border-slate-800 text-center text-xs text-slate-400">
-                        <p class="mb-3">※ コメントを投稿するにはログインが必要です。</p>
-                        <button class="sharp-btn" onclick="openAuthTab()">新規登録 / ログインへ</button>
+                        <p class="mb-3">※ コメント投稿にはログインが必要です。</p>
+                        <button class="sharp-btn" onclick="openAuthTab()">ログインへ</button>
                     </div>
                 `;
                 return;
@@ -969,34 +1089,28 @@
                     <div class="text-slate-300 font-bold border-b border-slate-800 pb-2">
                         ログイン中: <span class="text-sky-400">${escapeHtml(currentUser)}</span>
                     </div>
-
                     <div>
                         <label class="block font-bold text-slate-300 mb-1">どこのサイトの誰か [必須]</label>
                         <input type="text" id="cmt-identity" required placeholder="例: UWUZUの〇〇" class="sharp-input">
                     </div>
-
                     <div>
                         <label class="block font-bold text-slate-300 mb-1">ユーザーURL（任意）</label>
-                        <input type="url" id="cmt-url" placeholder="ユーザーURLがあったら貼ってください" class="sharp-input">
+                        <input type="url" id="cmt-url" class="sharp-input">
                     </div>
-
                     <div>
                         <label class="block font-bold text-slate-300 mb-1">公開設定</label>
                         <select id="cmt-visibility" class="sharp-input bg-slate-900">
-                            <option value="public">パブリック (誰でも閲覧可能)</option>
-                            <option value="private">プライベート (管理者のみ閲覧可能)</option>
+                            <option value="public">パブリック</option>
+                            <option value="private">プライベート (管理者のみ)</option>
                         </select>
                     </div>
-
                     <div>
                         <label class="block font-bold text-slate-300 mb-1">本文 [必須]</label>
-                        <textarea id="cmt-body" rows="4" required placeholder="コメント本文を入力..." class="sharp-input resize-y"></textarea>
+                        <textarea id="cmt-body" rows="4" required class="sharp-input resize-y"></textarea>
                     </div>
-
-                    <button type="submit" class="sharp-btn w-full py-2">コメントを送信する</button>
+                    <button type="submit" class="sharp-btn w-full py-2">コメント送信</button>
                 </form>
             `;
-
             document.getElementById('comment-form').addEventListener('submit', handleCommentSubmit);
         }
 
@@ -1009,7 +1123,6 @@
             const url = document.getElementById('cmt-url').value.trim();
             const visibility = document.getElementById('cmt-visibility').value;
             const body = document.getElementById('cmt-body').value.trim();
-
             if (!identity || !body) return;
 
             const now = new Date();
@@ -1032,7 +1145,6 @@
 
             loadComments();
             renderCommentForm();
-            alert('コメントを送信しました。');
         }
 
         function loadComments() {
@@ -1040,24 +1152,15 @@
             const comments = JSON.parse(localStorage.getItem('site_comments') || '[]');
 
             if (comments.length === 0) {
-                listEl.innerHTML = `
-                    <div class="p-6 text-center border border-dashed border-slate-800 text-slate-500 text-xs">
-                        コメントはまだありません。
-                    </div>
-                `;
+                listEl.innerHTML = `<div class="p-6 text-center border border-dashed border-slate-800 text-slate-500 text-xs">コメントはまだありません。</div>`;
                 return;
             }
 
             let html = '';
             comments.forEach(cmt => {
                 const isPrivate = cmt.visibility === 'private';
-
                 if (isPrivate && !isMasterAuthenticated) {
-                    html += `
-                        <div class="bg-slate-900/40 p-4 border border-slate-800/80 text-xs">
-                            <span class="text-slate-500 italic">[ 非公開コメント (閲覧権限が必要です) ]</span>
-                        </div>
-                    `;
+                    html += `<div class="bg-slate-900/40 p-4 border border-slate-800/80 text-xs"><span class="text-slate-500 italic">[ 非公開コメント ]</span></div>`;
                     return;
                 }
 
@@ -1071,71 +1174,20 @@
                             </div>
                             <span class="text-slate-500 font-mono">${cmt.date}</span>
                         </div>
-
-                        ${cmt.url ? `
-                            <div>
-                                <a href="${escapeHtml(cmt.url)}" target="_blank" rel="noopener noreferrer" class="text-slate-400 underline hover:text-sky-400 break-all">
-                                    [URL] ${escapeHtml(cmt.url)}
-                                </a>
-                            </div>
-                        ` : ''}
-
                         <p class="text-slate-200 whitespace-pre-wrap leading-relaxed">${escapeHtml(cmt.body)}</p>
-
-                        ${cmt.replies && cmt.replies.length > 0 ? `
-                            <div class="mt-3 pl-4 border-l-2 border-sky-400 space-y-2">
-                                ${cmt.replies.map(r => `
-                                    <div class="bg-slate-950 p-2.5 border border-slate-800">
-                                        <div class="flex justify-between text-slate-400 mb-1">
-                                            <span class="font-bold text-sky-300">Re: kakuzatou (管理者)</span>
-                                            <span class="font-mono text-slate-500">${r.date}</span>
-                                        </div>
-                                        <p class="text-slate-200 whitespace-pre-wrap">${escapeHtml(r.body)}</p>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-
                         ${isMasterAuthenticated ? `
-                            <div class="pt-2 border-t border-slate-800 flex flex-wrap gap-2 justify-end">
-                                <button class="sharp-btn text-xs py-1 px-3" onclick="promptReply('${cmt.id}')">返信</button>
+                            <div class="pt-2 border-t border-slate-800 flex justify-end">
                                 <button class="sharp-btn-danger" onclick="deleteComment('${cmt.id}')">削除</button>
                             </div>
                         ` : ''}
                     </div>
                 `;
             });
-
             listEl.innerHTML = html;
         }
 
-        function promptReply(commentId) {
-            if (!isMasterAuthenticated) return;
-            const replyBody = prompt('返信内容を入力してください:');
-            if (!replyBody || !replyBody.trim()) return;
-
-            const comments = JSON.parse(localStorage.getItem('site_comments') || '[]');
-            const target = comments.find(c => c.id === commentId);
-
-            if (target) {
-                if (!target.replies) target.replies = [];
-                const now = new Date();
-                const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-                target.replies.push({
-                    body: replyBody.trim(),
-                    date: dateStr
-                });
-
-                localStorage.setItem('site_comments', JSON.stringify(comments));
-                loadComments();
-            }
-        }
-
         function deleteComment(commentId) {
-            if (!isMasterAuthenticated) return;
-            if (!confirm('このコメントを削除しますか？')) return;
-
+            if (!isMasterAuthenticated || !confirm('削除しますか？')) return;
             let comments = JSON.parse(localStorage.getItem('site_comments') || '[]');
             comments = comments.filter(c => c.id !== commentId);
             localStorage.setItem('site_comments', JSON.stringify(comments));
@@ -1144,23 +1196,13 @@
 
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/&/g, "&amp;")
-                      .replace(/</g, "&lt;")
-                      .replace(/>/g, "&gt;")
-                      .replace(/"/g, "&quot;")
-                      .replace(/'/g, "&#039;");
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        // --- 初期化 ---
         window.addEventListener('DOMContentLoaded', () => {
             renderAuthNav();
             loadComments();
             parseUrlHashProfile();
-
-            // 初期カスタム項目デモセットアップ
-            addCustomField('好きな食べ物', '天津飯');
-            addCustomField('趣味', 'ゲーム, 読書');
-            addCustomLink('Twitter / X', 'https://twitter.com');
         });
     </script>
 </body>
