@@ -35,6 +35,7 @@
             user-select: none;
         }
 
+        /* 背景の星 */
         .stars-container {
             position: fixed;
             top: 0;
@@ -52,6 +53,20 @@
         @keyframes twinkle {
             0%, 100% { opacity: 0.15; transform: scale(0.8); }
             50% { opacity: 0.85; transform: scale(1.1); box-shadow: 0 0 4px var(--accent-color); }
+        }
+
+        /* クリック・タップ時の星エフェクト */
+        .click-star {
+            position: fixed;
+            pointer-events: none;
+            background: #ffffff;
+            box-shadow: 0 0 6px var(--accent-color);
+            z-index: 9999;
+            animation: burst 0.8s ease-out forwards;
+        }
+        @keyframes burst {
+            0% { opacity: 1; transform: translate(0, 0) scale(1.2); }
+            100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
         }
 
         header {
@@ -115,21 +130,6 @@
             color: #050814;
         }
 
-        .sharp-btn-danger {
-            background: #2a0a10;
-            border: 1px solid var(--danger-color);
-            color: #fca5a5;
-            padding: 6px 14px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .sharp-btn-danger:hover {
-            background: var(--danger-color);
-            color: #ffffff;
-        }
-
         .sharp-input {
             background: #080d1a;
             border: 1px solid var(--border-color);
@@ -142,6 +142,17 @@
         }
         .sharp-input:focus {
             border-color: var(--accent-color);
+        }
+
+        /* セレクトボックス（右側矢印アイコンを白に設定） */
+        select.sharp-input {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23ffffff' viewBox='0 0 16 16'><path d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
         }
 
         .digital-clock {
@@ -177,25 +188,35 @@
             color: var(--accent-color);
         }
 
-        .color-preset {
-            width: 28px;
-            height: 28px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: transform 0.1s;
-        }
-        .color-preset:hover {
-            transform: scale(1.1);
-        }
-        .color-preset.active {
-            border-color: #ffffff;
+        /* ウェルカム画面（モーダル） */
+        #welcome-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 8, 20, 0.98);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 20px;
         }
     </style>
 </head>
 <body class="relative min-h-screen flex flex-col justify-between">
 
+    <!-- ウェルカムモーダル -->
+    <div id="welcome-modal">
+        <div class="text-center space-y-6 max-w-md w-full p-8 sharp-card">
+            <h1 class="text-4xl font-black text-sky-400 tracking-wider animate-pulse">ようこそ！</h1>
+            <p class="text-slate-300 text-sm">space. へようこそ。</p>
+            <button class="sharp-btn text-base py-3 px-10 w-full" onclick="enterSite()">入る</button>
+        </div>
+    </div>
+
+    <!-- 星の背景 -->
     <div class="stars-container" id="stars-container"></div>
 
+    <!-- ヘッダー -->
     <header class="w-full px-4 py-3 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-4">
             <h1 class="text-2xl font-black tracking-wider text-sky-400 cursor-pointer" onclick="showTab('about')">
@@ -210,12 +231,8 @@
             <nav class="flex flex-wrap items-center gap-2" id="main-nav">
                 <button class="nav-btn active" id="btn-about" onclick="showTab('about')">ABOUT</button>
                 <button class="nav-btn" id="btn-profile" onclick="showTab('profile')">PROFILE</button>
-                <div id="dynamic-pages-nav" class="contents"></div>
-                <button class="nav-btn" id="btn-builder" onclick="showTab('builder')">BUILDER</button>
                 <button class="nav-btn" id="btn-message" onclick="showTab('message')">COMMENT</button>
                 <button class="nav-btn" id="btn-privacy" onclick="showTab('privacy')">PRIVACY</button>
-
-                <div id="auth-nav-container" class="ml-2 flex items-center gap-2"></div>
             </nav>
 
             <div id="bell-widget" class="relative flex items-center bg-slate-900 border border-slate-700 p-1.5 pl-2.5 pr-1">
@@ -240,9 +257,10 @@
         </div>
     </header>
 
+    <!-- メインコンテンツ -->
     <main class="relative z-10 max-w-3xl w-full mx-auto p-4 my-6 flex-grow">
 
-        <!-- 1. ABOUT (このサイトについて) -->
+        <!-- 1. ABOUT -->
         <section id="tab-about" class="tab-content active">
             <div class="sharp-card p-6 md:p-10">
                 <div class="border-b border-slate-700 pb-3 mb-6">
@@ -251,22 +269,18 @@
                 </div>
 
                 <div class="space-y-4 text-slate-200 text-base leading-relaxed">
-                    <p class="p-3 bg-slate-900/90 border-l-2 border-sky-400 font-semibold">
-                        当サイト「space.」は、自分専用のプロフィールや追加ページを作成し、URLひとつで簡単に共有できるWebスペースです。
+                    <p class="p-3 bg-slate-900/90 border-l-2 border-sky-400 font-semibold text-lg text-sky-400">
+                        ようこそ！
                     </p>
                     <p class="p-3 bg-slate-900/90 border-l-2 border-slate-600">
-                        ずば抜けて得意なこともない、普通すぎる人のための空間。名前はkakuzatou、シュガー、NYO、エビフライなど。
-                    </p>
-                    <p class="p-3 bg-slate-900/90 border-l-2 border-sky-400 font-semibold">
-                        呪術廻戦ネタが好きです。
+                        ずば抜けて得意なこともない、普通すぎる人です。
                     </p>
                     <p class="p-3 bg-slate-900/90 border-l-2 border-slate-600">
-                        ログインして自分だけのプロフィールや追加ページを作ってみてください。
+                        名前はkakuzatou、シュガー、NYO、エビフライなどなど。
                     </p>
 
-                    <div class="pt-4 flex flex-wrap gap-3" id="about-action-buttons">
+                    <div class="pt-4 flex flex-wrap gap-3">
                         <button class="sharp-btn" onclick="showTab('profile')">プロフィールを見る</button>
-                        <button class="sharp-btn" id="about-builder-btn" onclick="showTab('builder')">プロフィールを作成・編集</button>
                     </div>
                 </div>
             </div>
@@ -277,15 +291,7 @@
             <div class="sharp-card p-6 md:p-10" id="profile-card-container"></div>
         </section>
 
-        <!-- 動的追加ページ用のコンテナ -->
-        <div id="dynamic-pages-container"></div>
-
-        <!-- 3. BUILDER -->
-        <section id="tab-builder" class="tab-content">
-            <div class="sharp-card p-6 md:p-10" id="builder-card-wrapper"></div>
-        </section>
-
-        <!-- 4. COMMENT -->
+        <!-- 3. COMMENT -->
         <section id="tab-message" class="tab-content">
             <div class="sharp-card p-6 md:p-10">
                 <div class="border-b border-slate-800 pb-3 mb-6">
@@ -293,10 +299,11 @@
                     <h2 class="text-xl font-black text-white mt-1">コメント機能</h2>
                 </div>
 
+                <!-- 管理者認証 -->
                 <div class="mb-6 p-4 bg-slate-900/90 border border-slate-800 text-xs">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div>
-                            <span class="font-bold text-slate-300">非公開コメント閲覧・管理コード認証</span>
+                            <span class="font-bold text-slate-300">非公開コメント閲覧・返信（管理者認証）</span>
                             <span id="master-status-badge" class="ml-2 px-2 py-0.5 bg-slate-800 text-slate-400 font-bold">未認証</span>
                         </div>
                         <div class="flex items-center gap-2">
@@ -306,6 +313,7 @@
                     </div>
                 </div>
 
+                <!-- コメントフォーム -->
                 <div id="comment-form-container" class="mb-10"></div>
 
                 <div>
@@ -315,61 +323,30 @@
             </div>
         </section>
 
-        <!-- 5. PRIVACY -->
+        <!-- 4. PRIVACY -->
         <section id="tab-privacy" class="tab-content">
             <div class="sharp-card p-6 md:p-10">
                 <div class="border-b border-slate-800 pb-3 mb-6">
                     <span class="text-xs font-bold text-sky-400 tracking-wider">LEGAL</span>
-                    <h2 class="text-xl font-black text-white mt-1">プライバシーポリシー</h2>
+                    <h2 class="text-xl font-black text-white mt-1">利用規約・プライバシーポリシー</h2>
                 </div>
 
                 <div class="space-y-5 text-xs text-slate-300 leading-relaxed">
                     <section>
-                        <h3 class="text-sm font-bold text-white mb-2">1. 情報の収集と保持</h3>
-                        <p>当サイトではローカルストレージを使用してデータを保持します。</p>
+                        <h3 class="text-sm font-bold text-white mb-2">1. ホスティングおよびアクセス解析について</h3>
+                        <p>当サイト（<a href="https://space-gamma-dusky.vercel.app/" class="text-sky-400 hover:underline" target="_blank" rel="noopener noreferrer">https://space-gamma-dusky.vercel.app/</a>）は、<strong>Vercel, Inc.</strong> のホスティングサービスを利用して運営されています。</p>
+                        <p class="mt-2">Vercelのサーバーでは、セキュリティ確保やサービス改善のためにIPアドレス、ブラウザ情報、アクセス日時などのログデータを自動的に取得・保持する場合があります。詳細はVercelのプライバシーポリシーをご確認ください。</p>
                     </section>
-                </div>
-            </div>
-        </section>
 
-        <!-- 6. AUTH -->
-        <section id="tab-auth" class="tab-content">
-            <div class="sharp-card p-6 md:p-8 max-w-md mx-auto">
-                <div class="border-b border-slate-800 pb-3 mb-6 text-center">
-                    <h2 class="text-xl font-black text-white" id="auth-title">ログイン</h2>
-                    <p class="text-xs text-sky-400 mt-1" id="auth-subtitle">登録済みのアカウントでログインしてください</p>
-                </div>
+                    <section>
+                        <h3 class="text-sm font-bold text-white mb-2">2. コメントの公開範囲について</h3>
+                        <p>「パブリック」で投稿されたコメントは誰でも閲覧可能です。「プライベート」で投稿されたコメントは、特定の管理パスワードを認識した閲覧者のみに限定して表示されます。</p>
+                    </section>
 
-                <form id="auth-form" class="space-y-4 text-xs">
-                    <div>
-                        <label class="block font-bold text-slate-300 mb-1">ユーザー名</label>
-                        <input type="text" id="auth-username" required class="sharp-input" placeholder="ユーザー名を入力">
-                    </div>
-
-                    <div>
-                        <label class="block font-bold text-slate-300 mb-1">パスワード</label>
-                        <input type="password" id="auth-password" required class="sharp-input" placeholder="パスワードを入力">
-                    </div>
-
-                    <div id="confirm-password-container" style="display: none;">
-                        <label class="block font-bold text-slate-300 mb-1">パスワード（確認用）</label>
-                        <input type="password" id="auth-password-confirm" class="sharp-input" placeholder="同じパスワードを再入力">
-                    </div>
-
-                    <div class="flex items-center gap-2 pt-1">
-                        <input type="checkbox" id="auth-remember" class="accent-sky-400 w-4 h-4 cursor-pointer">
-                        <label for="auth-remember" class="text-slate-300 cursor-pointer select-none">ログイン維持</label>
-                    </div>
-
-                    <div id="auth-error" class="text-xs text-rose-400 font-bold hidden"></div>
-
-                    <button type="submit" id="auth-submit-btn" class="sharp-btn w-full py-2.5 mt-2">ログインする</button>
-                </form>
-
-                <div class="mt-6 pt-4 border-t border-slate-800 text-center">
-                    <button type="button" class="text-xs text-sky-400 hover:underline" id="toggle-auth-mode-btn" onclick="toggleAuthMode()">
-                        アカウントをお持ちでない方（新規登録）
-                    </button>
+                    <section>
+                        <h3 class="text-sm font-bold text-white mb-2">3. ローカルストレージの使用</h3>
+                        <p>当サイトでは、サイト内の設定データや送信したコメント情報の管理のために、お使いのブラウザのローカルストレージ（Local Storage）を使用する場合があります。</p>
+                    </section>
                 </div>
             </div>
         </section>
@@ -391,30 +368,26 @@
             blood: "O型",
             location: "地球",
             activity: "雑談（NARI）",
-            isObfuscatedBirth: true,
             fields: [
-                { label: "好きな食べ物", value: "天津飯" },
-                { label: "苦手な食べ物", value: "ライスペーパー" },
-                { label: "趣味", value: "ビデオゲーム、漫画・アニメ鑑賞" },
+                { label: "好きな物・事", value: "温泉" },
+                { label: "苦手な物・事", value: "運動" },
+                { label: "趣味", value: "ビデオゲーム、漫画・アニメ鑑賞、読書、雑談" },
+                { label: "好きなゲーム", value: "HOLLOW KNIGHT、僕のヒーローアカデミア ULTRA RUMBLE" },
                 { label: "好きな漫画・アニメ", value: "暗殺教室、僕のヒーローアカデミア、呪術廻戦" }
             ],
             links: [
-                { name: "NARI Top", url: "https://nari.oz96.com/" }
-            ],
-            extraPages: [
-                { title: "お知らせ", content: "ようこそ。こちらは追加ページのサンプルです。" }
+                { name: "NARI Top", url: "https://nari.oz96.com/" },
+                { name: "NARI マイページ", url: "https://nari.oz96.com/users/244452" },
+                { name: "NARI サブ垢（個チャしたい人用）", url: "https://nari.oz96.com/users/237928" }
             ]
         };
 
-        let currentProfileData = { ...defaultProfile };
-        let selectedThemeColor = "#38bdf8";
-        let isViewingOtherProfile = false;
-
+        // 背景の星を生成
         const starsContainer = document.getElementById('stars-container');
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < 90; i++) {
             const star = document.createElement('div');
             star.className = 'star';
-            const size = Math.random() * 2 + 1;
+            const size = Math.random() * 2.5 + 1;
             star.style.width = `${size}px`;
             star.style.height = `${size}px`;
             star.style.top = `${Math.random() * 100}%`;
@@ -422,6 +395,40 @@
             star.style.setProperty('--duration', `${Math.random() * 3 + 2}s`);
             star.style.animationDelay = `${Math.random() * 3}s`;
             starsContainer.appendChild(star);
+        }
+
+        // クリック/タップ時に星を発散させるエフェクト
+        document.addEventListener('click', (e) => {
+            createStarBurst(e.clientX, e.clientY);
+        });
+
+        function createStarBurst(x, y) {
+            const count = 8;
+            for (let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                star.className = 'click-star';
+                const size = Math.random() * 4 + 2;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${x}px`;
+                star.style.top = `${y}px`;
+
+                const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+                const distance = Math.random() * 40 + 20;
+                const dx = `${Math.cos(angle) * distance}px`;
+                const dy = `${Math.sin(angle) * distance}px`;
+
+                star.style.setProperty('--dx', dx);
+                star.style.setProperty('--dy', dy);
+
+                document.body.appendChild(star);
+                setTimeout(() => star.remove(), 800);
+            }
+        }
+
+        function enterSite() {
+            const modal = document.getElementById('welcome-modal');
+            if (modal) modal.style.display = 'none';
         }
 
         function toggleBellNotification() {
@@ -453,6 +460,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
+        // 文字化けアニメーション
         const obfuscatedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
         function animateObfuscatedText() {
             document.querySelectorAll('.obfuscated').forEach(el => {
@@ -476,76 +484,6 @@
             if (targetTab) targetTab.classList.add('active');
             if (targetBtn) targetBtn.classList.add('active');
 
-            if (tabName === 'builder') {
-                renderBuilderTab();
-            }
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function updateNavigationUI() {
-            const builderBtn = document.getElementById('btn-builder');
-            const commentBtn = document.getElementById('btn-message');
-            const aboutBuilderBtn = document.getElementById('about-builder-btn');
-
-            if (isViewingOtherProfile) {
-                if (builderBtn) builderBtn.style.display = 'none';
-                if (commentBtn) commentBtn.style.display = 'none';
-                if (aboutBuilderBtn) aboutBuilderBtn.style.display = 'none';
-            } else {
-                if (builderBtn) builderBtn.style.display = 'inline-block';
-                if (commentBtn) commentBtn.style.display = 'inline-block';
-                if (aboutBuilderBtn) aboutBuilderBtn.style.display = 'inline-block';
-            }
-        }
-
-        function renderExtraPages(extraPages) {
-            const navContainer = document.getElementById('dynamic-pages-nav');
-            const contentContainer = document.getElementById('dynamic-pages-container');
-
-            navContainer.innerHTML = '';
-            contentContainer.innerHTML = '';
-
-            if (!extraPages || extraPages.length === 0) return;
-
-            extraPages.forEach((page, index) => {
-                const tabId = `extra-page-${index}`;
-                
-                const btn = document.createElement('button');
-                btn.className = 'nav-btn';
-                btn.id = `btn-${tabId}`;
-                btn.textContent = page.title || `ページ${index + 1}`;
-                btn.onclick = () => showExtraTab(tabId);
-                navContainer.appendChild(btn);
-
-                const section = document.createElement('section');
-                section.id = `tab-${tabId}`;
-                section.className = 'tab-content';
-                section.innerHTML = `
-                    <div class="sharp-card p-6 md:p-10">
-                        <div class="border-b border-slate-700 pb-3 mb-6">
-                            <span class="text-xs font-bold tracking-wider" style="color:var(--accent-color);">PAGE</span>
-                            <h2 class="text-xl font-black text-white mt-1">${escapeHtml(page.title)}</h2>
-                        </div>
-                        <div class="space-y-4 text-slate-200 text-sm leading-relaxed whitespace-pre-wrap bg-slate-900/60 p-5 border border-slate-800">
-                            ${escapeHtml(page.content)}
-                        </div>
-                    </div>
-                `;
-                contentContainer.appendChild(section);
-            });
-        }
-
-        function showExtraTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-
-            const targetTab = document.getElementById(`tab-${tabId}`);
-            const targetBtn = document.getElementById(`btn-${tabId}`);
-
-            if (targetTab) targetTab.classList.add('active');
-            if (targetBtn) targetBtn.classList.add('active');
-
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -554,10 +492,6 @@
             const themeColor = data.color || '#38bdf8';
             document.documentElement.style.setProperty('--accent-color', themeColor);
 
-            let birthDisplay = data.isObfuscatedBirth ? '20<span class="obfuscated" data-length="2"></span>/06/27' : escapeHtml(data.birth || '');
-            let ageDisplay = (data.age === '天才' || data.age && data.age.includes('obfuscated')) ? (data.age === '天才' ? '天才' : '<span class="obfuscated" data-length="2"></span>歳') : escapeHtml(data.age || '');
-            let genderDisplay = (data.gender === '神' || data.gender && data.gender.includes('obfuscated')) ? (data.gender === '神' ? '神' : '<span class="obfuscated" data-length="2"></span>') : escapeHtml(data.gender || '');
-
             let customFieldsHtml = '';
             if (data.fields && data.fields.length > 0) {
                 customFieldsHtml = `
@@ -565,9 +499,9 @@
                         <h3 class="text-xs font-bold tracking-wider mb-3 border-l-2 pl-2" style="color:${themeColor}; border-color:${themeColor};">詳細情報</h3>
                         <div class="bg-slate-900/60 p-4 border border-slate-800 space-y-3 text-xs">
                             ${data.fields.map(f => `
-                                <div class="flex justify-between border-b border-slate-800 pb-2">
-                                    <span class="text-slate-400">${escapeHtml(f.label)}</span>
-                                    <span class="text-slate-200 font-semibold">${escapeHtml(f.value)}</span>
+                                <div class="flex flex-col sm:flex-row justify-between border-b border-slate-800 pb-2 gap-1">
+                                    <span class="text-slate-400 font-bold">${escapeHtml(f.label)}</span>
+                                    <span class="text-slate-200">${escapeHtml(f.value)}</span>
                                 </div>
                             `).join('')}
                         </div>
@@ -591,7 +525,7 @@
 
             container.innerHTML = `
                 <div class="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8 pb-6 border-b border-slate-800">
-                    <img src="${escapeHtml(data.avatar || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300')}" 
+                    <img src="${escapeHtml(data.avatar)}" 
                          alt="${escapeHtml(data.name)}" 
                          class="avatar-square"
                          style="border-color:${themeColor};"
@@ -607,27 +541,27 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">誕生日</span>
-                            <span class="font-bold text-slate-200">${birthDisplay}</span>
+                            <span class="font-bold text-slate-200">${data.birth}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">年齢</span>
-                            <span class="font-bold text-slate-200">${ageDisplay}</span>
+                            <span class="font-bold text-slate-200">${data.age}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">性別</span>
-                            <span class="font-bold text-slate-200">${genderDisplay}</span>
+                            <span class="font-bold text-slate-200">${data.gender}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">血液型</span>
-                            <span class="font-bold text-slate-200">${escapeHtml(data.blood || '')}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.blood)}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">居住地</span>
-                            <span class="font-bold text-slate-200">${escapeHtml(data.location || '')}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.location)}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">メインアクティビティ</span>
-                            <span class="font-bold text-slate-200">${escapeHtml(data.activity || '')}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.activity)}</span>
                         </div>
                     </div>
                 </div>
@@ -635,418 +569,6 @@
                 ${customFieldsHtml}
                 ${linksHtml}
             `;
-
-            renderExtraPages(data.extraPages);
-            updateNavigationUI();
-        }
-
-        let uploadedAvatarBase64 = "";
-
-        function renderBuilderTab() {
-            const wrapper = document.getElementById('builder-card-wrapper');
-            const currentUser = getCurrentUser();
-
-            if (!currentUser) {
-                wrapper.innerHTML = `
-                    <div class="text-center py-12 space-y-4">
-                        <h2 class="text-xl font-black text-white">ログインが必要です</h2>
-                        <p class="text-xs text-slate-400">プロフィールを作成・編集するには、アカウントにログインしてください。</p>
-                        <button class="sharp-btn" onclick="openAuthTab()">新規登録 / ログインへ</button>
-                    </div>
-                `;
-                return;
-            }
-
-            const savedProfileKey = 'user_profile_' + currentUser;
-            const existingData = JSON.parse(localStorage.getItem(savedProfileKey) || JSON.stringify(defaultProfile));
-            currentProfileData = existingData;
-            selectedThemeColor = existingData.color || '#38bdf8';
-            uploadedAvatarBase64 = existingData.avatar || '';
-
-            wrapper.innerHTML = `
-                <div class="border-b border-slate-800 pb-3 mb-6">
-                    <span class="text-xs font-bold text-sky-400 tracking-wider">PROFILE BUILDER</span>
-                    <h2 class="text-xl font-black text-white mt-1">プロフィール編集 (${escapeHtml(currentUser)})</h2>
-                    <p class="text-xs text-slate-400 mt-1">追加ページ（最大5つ）やテーマカラーを設定して共有URLを発行できます。</p>
-                </div>
-
-                <form id="builder-form" class="space-y-6 text-xs">
-                    <div>
-                        <label class="block font-bold text-slate-300 mb-2">テーマカラー</label>
-                        <div class="flex items-center gap-3" id="theme-color-picker">
-                            <div class="color-preset ${selectedThemeColor==='#38bdf8'?'active':''}" style="background:#38bdf8;" data-color="#38bdf8"></div>
-                            <div class="color-preset ${selectedThemeColor==='#a855f7'?'active':''}" style="background:#a855f7;" data-color="#a855f7"></div>
-                            <div class="color-preset ${selectedThemeColor==='#10b981'?'active':''}" style="background:#10b981;" data-color="#10b981"></div>
-                            <div class="color-preset ${selectedThemeColor==='#f43f5e'?'active':''}" style="background:#f43f5e;" data-color="#f43f5e"></div>
-                            <div class="color-preset ${selectedThemeColor==='#f59e0b'?'active':''}" style="background:#f59e0b;" data-color="#f59e0b"></div>
-                            <div class="color-preset ${selectedThemeColor==='#ec4899'?'active':''}" style="background:#ec4899;" data-color="#ec4899"></div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">名前 / アカウント名 *</label>
-                            <input type="text" id="build-name" required value="${escapeHtml(existingData.name || currentUser)}" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">アイコン画像ファイル添付</label>
-                            <input type="file" id="build-avatar-file" accept="image/*" class="sharp-input text-xs py-1.5" onchange="handleImageUpload(event)">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">生年月日</label>
-                            <input type="text" id="build-birth" value="${escapeHtml(existingData.birth || '1111/1/1')}" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">年齢</label>
-                            <input type="text" id="build-age" value="${escapeHtml(existingData.age || '天才')}" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">性別</label>
-                            <input type="text" id="build-gender" value="${escapeHtml(existingData.gender || 'クワガタ')}" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">血液型</label>
-                            <input type="text" id="build-blood" value="${escapeHtml(existingData.blood || 'クワガタ')}" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">居住地</label>
-                            <input type="text" id="build-location" value="${escapeHtml(existingData.location || '地球')}" class="sharp-input">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-300 mb-1">メインアクティビティ</label>
-                            <input type="text" id="build-activity" value="${escapeHtml(existingData.activity || '雑談')}" class="sharp-input">
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="font-bold text-slate-300">カスタムプロフィール項目</label>
-                            <button type="button" class="sharp-btn py-1 px-3 text-xs" onclick="addCustomFieldRow()">+ 項目を追加</button>
-                        </div>
-                        <div id="custom-fields-container" class="space-y-2"></div>
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="font-bold text-slate-300">外部リンク</label>
-                            <button type="button" class="sharp-btn py-1 px-3 text-xs" onclick="addCustomLinkRow()">+ リンクを追加</button>
-                        </div>
-                        <div id="custom-links-container" class="space-y-2"></div>
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="font-bold text-slate-300">追加ページ作成 (上限5つ)</label>
-                            <button type="button" class="sharp-btn py-1 px-3 text-xs" onclick="addExtraPageRow()">+ ページを追加</button>
-                        </div>
-                        <div id="extra-pages-container" class="space-y-4"></div>
-                    </div>
-
-                    <div class="pt-4 border-t border-slate-800 flex flex-wrap gap-3">
-                        <button type="submit" class="sharp-btn py-2.5 px-6">プロフィールを保存してURLを自動コピー</button>
-                    </div>
-                </form>
-
-                <div id="generated-url-area" class="hidden mt-6 p-4 bg-slate-900 border border-sky-400">
-                    <p class="font-bold text-sky-400 mb-1">プロフィールURLが自動コピーされました！</p>
-                    <p class="text-slate-400 text-xs mb-3">このURLをそのままチャット等に貼り付けて共有できます。</p>
-                    <div class="flex gap-2">
-                        <input type="text" id="generated-url-input" readonly class="sharp-input font-mono text-xs">
-                        <button class="sharp-btn text-xs py-1.5 px-4 whitespace-nowrap" onclick="copyGeneratedUrl()">再コピー</button>
-                        <button class="sharp-btn text-xs py-1.5 px-4 whitespace-nowrap" onclick="previewGeneratedProfile()">プレビュー</button>
-                    </div>
-                </div>
-            `;
-
-            document.querySelectorAll('.color-preset').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.color-preset').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    selectedThemeColor = btn.getAttribute('data-color');
-                });
-            });
-
-            if (existingData.fields) {
-                existingData.fields.forEach(f => addCustomFieldRow(f.label, f.value));
-            }
-            if (existingData.links) {
-                existingData.links.forEach(l => addCustomLinkRow(l.name, l.url));
-            }
-            if (existingData.extraPages) {
-                existingData.extraPages.forEach(p => addExtraPageRow(p.title, p.content));
-            }
-
-            document.getElementById('builder-form').addEventListener('submit', handleBuilderSubmit);
-        }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                uploadedAvatarBase64 = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function addCustomFieldRow(label = '', value = '') {
-            const container = document.getElementById('custom-fields-container');
-            const div = document.createElement('div');
-            div.className = 'flex gap-2 items-center';
-            div.innerHTML = `
-                <input type="text" placeholder="項目名" value="${escapeHtml(label)}" class="sharp-input w-1/3 build-field-label">
-                <input type="text" placeholder="内容" value="${escapeHtml(value)}" class="sharp-input w-2/3 build-field-value">
-                <button type="button" class="sharp-btn-danger py-2 px-3" onclick="this.parentElement.remove()">-</button>
-            `;
-            container.appendChild(div);
-        }
-
-        function addCustomLinkRow(name = '', url = '') {
-            const container = document.getElementById('custom-links-container');
-            const div = document.createElement('div');
-            div.className = 'flex gap-2 items-center';
-            div.innerHTML = `
-                <input type="text" placeholder="リンク名" value="${escapeHtml(name)}" class="sharp-input w-1/3 build-link-name">
-                <input type="url" placeholder="URL" value="${escapeHtml(url)}" class="sharp-input w-2/3 build-link-url">
-                <button type="button" class="sharp-btn-danger py-2 px-3" onclick="this.parentElement.remove()">-</button>
-            `;
-            container.appendChild(div);
-        }
-
-        function addExtraPageRow(title = '', content = '') {
-            const container = document.getElementById('extra-pages-container');
-            const currentCount = container.querySelectorAll('.extra-page-row').length;
-            if (currentCount >= 5) {
-                alert('追加ページは最大5つまでです。');
-                return;
-            }
-            const div = document.createElement('div');
-            div.className = 'extra-page-row bg-slate-900/80 p-3 border border-slate-800 space-y-2';
-            div.innerHTML = `
-                <div class="flex justify-between items-center">
-                    <input type="text" placeholder="ページタイトル (例: ブログ)" value="${escapeHtml(title)}" class="sharp-input w-3/4 extra-page-title text-xs font-bold">
-                    <button type="button" class="sharp-btn-danger py-1 px-3 text-xs" onclick="this.closest('.extra-page-row').remove()">削除</button>
-                </div>
-                <textarea placeholder="ページ本文..." rows="3" class="sharp-input extra-page-content text-xs resize-y">${escapeHtml(content)}</textarea>
-            `;
-            container.appendChild(div);
-        }
-
-        function handleBuilderSubmit(e) {
-            e.preventDefault();
-            const currentUser = getCurrentUser();
-            if (!currentUser) return;
-
-            const fields = [];
-            document.querySelectorAll('#custom-fields-container > div').forEach(row => {
-                const l = row.querySelector('.build-field-label').value.trim();
-                const v = row.querySelector('.build-field-value').value.trim();
-                if (l && v) fields.push({ label: l, value: v });
-            });
-
-            const links = [];
-            document.querySelectorAll('#custom-links-container > div').forEach(row => {
-                const n = row.querySelector('.build-link-name').value.trim();
-                const u = row.querySelector('.build-link-url').value.trim();
-                if (n && u) links.push({ name: n, url: u });
-            });
-
-            const extraPages = [];
-            document.querySelectorAll('#extra-pages-container > .extra-page-row').forEach(row => {
-                const t = row.querySelector('.extra-page-title').value.trim();
-                const c = row.querySelector('.extra-page-content').value.trim();
-                if (t) extraPages.push({ title: t, content: c });
-            });
-
-            const customData = {
-                name: document.getElementById('build-name').value.trim(),
-                color: selectedThemeColor,
-                avatar: uploadedAvatarBase64 || defaultProfile.avatar,
-                birth: document.getElementById('build-birth').value.trim(),
-                age: document.getElementById('build-age').value.trim(),
-                gender: document.getElementById('build-gender').value.trim(),
-                blood: document.getElementById('build-blood').value.trim(),
-                location: document.getElementById('build-location').value.trim(),
-                activity: document.getElementById('build-activity').value.trim(),
-                isObfuscatedBirth: false,
-                fields: fields,
-                links: links,
-                extraPages: extraPages
-            };
-
-            currentProfileData = customData;
-            localStorage.setItem('user_profile_' + currentUser, JSON.stringify(customData));
-
-            const jsonStr = JSON.stringify(customData);
-            const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
-            const fullUrl = `${window.location.origin}${window.location.pathname}#/u/${customData.name}?p=${encoded}`;
-
-            document.getElementById('generated-url-input').value = fullUrl;
-            document.getElementById('generated-url-area').classList.remove('hidden');
-
-            navigator.clipboard.writeText(fullUrl).catch(() => {});
-
-            renderProfileCard(customData);
-            alert('プロフィールを保存し、共有用URLを自動コピーしました！');
-        }
-
-        function copyGeneratedUrl() {
-            const input = document.getElementById('generated-url-input');
-            input.select();
-            document.execCommand('copy');
-            alert('URLをコピーしました！');
-        }
-
-        function previewGeneratedProfile() {
-            renderProfileCard(currentProfileData);
-            showTab('profile');
-        }
-
-        function parseUrlHashProfile() {
-            const hash = window.location.hash;
-            if (hash.includes('?p=')) {
-                try {
-                    const encoded = hash.split('?p=')[1];
-                    const jsonStr = decodeURIComponent(escape(atob(decodeURIComponent(encoded))));
-                    const profile = JSON.parse(jsonStr);
-                    currentProfileData = profile;
-                    isViewingOtherProfile = true;
-                    renderProfileCard(profile);
-                    showTab('profile');
-                    return true;
-                } catch (e) {}
-            }
-            isViewingOtherProfile = false;
-            renderProfileCard(defaultProfile);
-            return false;
-        }
-
-        function getCurrentUser() {
-            return localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
-        }
-
-        function renderAuthNav() {
-            const container = document.getElementById('auth-nav-container');
-            const currentUser = getCurrentUser();
-
-            if (currentUser) {
-                container.innerHTML = `
-                    <span class="text-xs text-sky-400 font-bold border border-slate-800 px-3 py-1 bg-slate-900">[ ${escapeHtml(currentUser)} ]</span>
-                    <button class="sharp-btn-danger" onclick="confirmLogout()">LOGOUT</button>
-                `;
-            } else {
-                container.innerHTML = `
-                    <button class="nav-btn" onclick="openAuthTab()">新規登録 / ログイン</button>
-                `;
-            }
-            renderCommentForm();
-            updateNavigationUI();
-        }
-
-        function confirmLogout() {
-            if (confirm('本当にログアウトしますか？')) {
-                localStorage.removeItem('currentUser');
-                sessionStorage.removeItem('currentUser');
-                renderAuthNav();
-                showTab('about');
-            }
-        }
-
-        let isSignUpMode = false;
-        function openAuthTab() {
-            isSignUpMode = false;
-            updateAuthFormUI();
-            showTab('auth');
-        }
-
-        function toggleAuthMode() {
-            isSignUpMode = !isSignUpMode;
-            updateAuthFormUI();
-        }
-
-        function updateAuthFormUI() {
-            const title = document.getElementById('auth-title');
-            const subtitle = document.getElementById('auth-subtitle');
-            const submitBtn = document.getElementById('auth-submit-btn');
-            const toggleBtn = document.getElementById('toggle-auth-mode-btn');
-            const confirmPassContainer = document.getElementById('confirm-password-container');
-            const errorDiv = document.getElementById('auth-error');
-
-            errorDiv.classList.add('hidden');
-            errorDiv.textContent = '';
-
-            if (isSignUpMode) {
-                title.textContent = '新規登録';
-                subtitle.textContent = 'アカウントを作成してください';
-                submitBtn.textContent = 'アカウントを作成する';
-                toggleBtn.textContent = 'すでにアカウントをお持ちの方（ログイン）';
-                confirmPassContainer.style.display = 'block';
-            } else {
-                title.textContent = 'ログイン';
-                subtitle.textContent = '登録済みのアカウントでログインしてください';
-                submitBtn.textContent = 'ログインする';
-                toggleBtn.textContent = 'アカウントをお持ちでない方（新規登録）';
-                confirmPassContainer.style.display = 'none';
-            }
-        }
-
-        document.getElementById('auth-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            const username = document.getElementById('auth-username').value.trim();
-            const password = document.getElementById('auth-password').value;
-            const passwordConfirm = document.getElementById('auth-password-confirm').value;
-            const remember = document.getElementById('auth-remember').checked;
-
-            if (!username || !password) {
-                showAuthError('ユーザー名とパスワードを入力してください。');
-                return;
-            }
-
-            let users = JSON.parse(localStorage.getItem('registered_users') || '{}');
-
-            if (isSignUpMode) {
-                if (users[username]) {
-                    showAuthError('エラー: このユーザー名は既に存在します。');
-                    return;
-                }
-                if (password !== passwordConfirm) {
-                    showAuthError('エラー: パスワード（確認用）が一致しません。');
-                    return;
-                }
-
-                users[username] = { password: password };
-                localStorage.setItem('registered_users', JSON.stringify(users));
-
-                if (remember) {
-                    localStorage.setItem('currentUser', username);
-                } else {
-                    sessionStorage.setItem('currentUser', username);
-                }
-
-                alert('アカウントが正常に登録されました。');
-                renderAuthNav();
-                showTab('about');
-            } else {
-                if (!users[username] || users[username].password !== password) {
-                    showAuthError('エラー: ユーザー名またはパスワードが間違っています。');
-                    return;
-                }
-
-                if (remember) {
-                    localStorage.setItem('currentUser', username);
-                } else {
-                    sessionStorage.setItem('currentUser', username);
-                }
-
-                renderAuthNav();
-                showTab('about');
-            }
-        });
-
-        function showAuthError(msg) {
-            const errorDiv = document.getElementById('auth-error');
-            errorDiv.textContent = msg;
-            errorDiv.classList.remove('hidden');
         }
 
         let isMasterAuthenticated = false;
@@ -1056,6 +578,7 @@
 
             if (keyInput === 'syokuyounousi') {
                 isMasterAuthenticated = true;
+                localStorage.setItem('master_auth', 'true');
                 badge.textContent = '認証済み (管理者)';
                 badge.className = 'ml-2 px-2 py-0.5 bg-sky-900 text-sky-200 font-bold';
                 document.getElementById('master-key-input').value = '';
@@ -1066,42 +589,38 @@
             }
         }
 
+        function checkMasterAuthStatus() {
+            if (localStorage.getItem('master_auth') === 'true') {
+                isMasterAuthenticated = true;
+                const badge = document.getElementById('master-status-badge');
+                if (badge) {
+                    badge.textContent = '認証済み (管理者)';
+                    badge.className = 'ml-2 px-2 py-0.5 bg-sky-900 text-sky-200 font-bold';
+                }
+            }
+        }
+
         function renderCommentForm() {
             const container = document.getElementById('comment-form-container');
-            const currentUser = getCurrentUser();
-
-            if (!currentUser) {
-                container.innerHTML = `
-                    <div class="p-6 bg-slate-900/80 border border-slate-800 text-center text-xs text-slate-400">
-                        <p class="mb-3">※ コメント投稿にはログインが必要です。</p>
-                        <button class="sharp-btn" onclick="openAuthTab()">ログインへ</button>
-                    </div>
-                `;
-                return;
-            }
-
             container.innerHTML = `
                 <form id="comment-form" class="space-y-4 bg-slate-900/60 p-5 border border-slate-800 text-xs">
-                    <div class="text-slate-300 font-bold border-b border-slate-800 pb-2">
-                        ログイン中: <span class="text-sky-400">${escapeHtml(currentUser)}</span>
-                    </div>
                     <div>
-                        <label class="block font-bold text-slate-300 mb-1">どこのサイトの誰か [必須]</label>
+                        <label class="block font-bold text-slate-300 mb-1">お名前 / どこのサイトの誰か <span class="text-rose-500 font-bold">*</span></label>
                         <input type="text" id="cmt-identity" required placeholder="例: UWUZUの〇〇" class="sharp-input">
                     </div>
                     <div>
-                        <label class="block font-bold text-slate-300 mb-1">ユーザーURL（任意）</label>
+                        <label class="block font-bold text-slate-300 mb-1">ユーザーURL</label>
                         <input type="url" id="cmt-url" class="sharp-input">
                     </div>
                     <div>
                         <label class="block font-bold text-slate-300 mb-1">公開設定</label>
                         <select id="cmt-visibility" class="sharp-input bg-slate-900">
-                            <option value="public">パブリック</option>
+                            <option value="public">パブリック (全員に表示)</option>
                             <option value="private">プライベート (管理者のみ)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block font-bold text-slate-300 mb-1">本文 [必須]</label>
+                        <label class="block font-bold text-slate-300 mb-1">本文 <span class="text-rose-500 font-bold">*</span></label>
                         <textarea id="cmt-body" rows="4" required class="sharp-input resize-y"></textarea>
                     </div>
                     <button type="submit" class="sharp-btn w-full py-2">コメント送信</button>
@@ -1112,8 +631,6 @@
 
         function handleCommentSubmit(e) {
             e.preventDefault();
-            const currentUser = getCurrentUser();
-            if (!currentUser) return;
 
             const identity = document.getElementById('cmt-identity').value.trim();
             const url = document.getElementById('cmt-url').value.trim();
@@ -1126,7 +643,7 @@
 
             const newComment = {
                 id: Date.now().toString(),
-                author: currentUser,
+                author: identity,
                 identity: identity,
                 url: url,
                 visibility: visibility,
@@ -1160,20 +677,44 @@
                     return;
                 }
 
+                let repliesHtml = '';
+                if (cmt.replies && cmt.replies.length > 0) {
+                    repliesHtml = `
+                        <div class="mt-3 pl-4 border-l-2 border-sky-400 space-y-2">
+                            ${cmt.replies.map(r => `
+                                <div class="bg-slate-950 p-3 border border-slate-800">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-sky-400">[ 管理者返信 ]</span>
+                                        <span class="text-slate-500 text-[10px] font-mono">${r.date}</span>
+                                    </div>
+                                    <p class="text-slate-200 whitespace-pre-wrap">${escapeHtml(r.body)}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
                 html += `
                     <div class="bg-slate-900/80 p-4 border border-slate-800 text-xs space-y-3">
                         <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-2">
                             <div>
                                 <span class="font-bold text-sky-400">[ ${escapeHtml(cmt.author)} ]</span>
-                                <span class="text-slate-300 ml-2">(${escapeHtml(cmt.identity)})</span>
+                                ${cmt.url ? `<a href="${escapeHtml(cmt.url)}" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:underline ml-2">URL</a>` : ''}
                                 ${isPrivate ? '<span class="ml-2 px-1.5 py-0.5 bg-rose-950 text-rose-400 font-bold border border-rose-800">プライベート</span>' : ''}
                             </div>
                             <span class="text-slate-500 font-mono">${cmt.date}</span>
                         </div>
                         <p class="text-slate-200 whitespace-pre-wrap leading-relaxed">${escapeHtml(cmt.body)}</p>
+                        ${repliesHtml}
                         ${isMasterAuthenticated ? `
                             <div class="pt-2 border-t border-slate-800 flex justify-end">
-                                <button class="sharp-btn-danger" onclick="deleteComment('${cmt.id}')">削除</button>
+                                <button class="sharp-btn text-xs py-1 px-3" onclick="showReplyForm('${cmt.id}')">返信</button>
+                            </div>
+                            <div id="reply-form-${cmt.id}" class="hidden pt-2 space-y-2">
+                                <textarea id="reply-body-${cmt.id}" rows="2" placeholder="返信内容を入力..." class="sharp-input text-xs"></textarea>
+                                <div class="flex justify-end gap-2">
+                                    <button class="sharp-btn text-xs py-1 px-3" onclick="submitReply('${cmt.id}')">送信</button>
+                                </div>
                             </div>
                         ` : ''}
                     </div>
@@ -1182,12 +723,30 @@
             listEl.innerHTML = html;
         }
 
-        function deleteComment(commentId) {
-            if (!isMasterAuthenticated || !confirm('削除しますか？')) return;
+        function showReplyForm(commentId) {
+            const el = document.getElementById(`reply-form-${commentId}`);
+            if (el) el.classList.toggle('hidden');
+        }
+
+        function submitReply(commentId) {
+            const bodyInput = document.getElementById(`reply-body-${commentId}`);
+            const body = bodyInput ? bodyInput.value.trim() : '';
+            if (!body) return;
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
             let comments = JSON.parse(localStorage.getItem('site_comments') || '[]');
-            comments = comments.filter(c => c.id !== commentId);
-            localStorage.setItem('site_comments', JSON.stringify(comments));
-            loadComments();
+            const index = comments.findIndex(c => c.id === commentId);
+            if (index !== -1) {
+                if (!comments[index].replies) comments[index].replies = [];
+                comments[index].replies.push({
+                    body: body,
+                    date: dateStr
+                });
+                localStorage.setItem('site_comments', JSON.stringify(comments));
+                loadComments();
+            }
         }
 
         function escapeHtml(str) {
@@ -1196,9 +755,10 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            renderAuthNav();
+            renderProfileCard(defaultProfile);
+            checkMasterAuthStatus();
+            renderCommentForm();
             loadComments();
-            parseUrlHashProfile();
         });
     </script>
 </body>
