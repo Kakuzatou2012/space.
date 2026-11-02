@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>space.</title>
+    <!-- Tailwind CSS (レスポンシブ・UIスタイリング用) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -35,7 +36,25 @@
             user-select: none;
         }
 
-        /* 背景の星 */
+        /* フルスクリーンウェルカムオーバーレイ */
+        #welcome-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(5, 8, 20, 0.98);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        #welcome-overlay.hidden-overlay {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* 星空背景アニメーション */
         .stars-container {
             position: fixed;
             top: 0;
@@ -55,18 +74,25 @@
             50% { opacity: 0.85; transform: scale(1.1); box-shadow: 0 0 4px var(--accent-color); }
         }
 
-        /* クリック・タップ時の星エフェクト */
-        .click-star {
+        /* クリック・切り替えスパーク粒子のエフェクト */
+        .burst-particle {
             position: fixed;
             pointer-events: none;
             background: #ffffff;
+            border-radius: 50% !important;
             box-shadow: 0 0 6px var(--accent-color);
             z-index: 9999;
-            animation: burst 0.8s ease-out forwards;
+            animation: burstFade 0.7s ease-out forwards;
         }
-        @keyframes burst {
-            0% { opacity: 1; transform: translate(0, 0) scale(1.2); }
-            100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
+        @keyframes burstFade {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--dx), var(--dy)) scale(0);
+            }
         }
 
         header {
@@ -144,17 +170,6 @@
             border-color: var(--accent-color);
         }
 
-        /* セレクトボックス（右側矢印アイコンを白に設定） */
-        select.sharp-input {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23ffffff' viewBox='0 0 16 16'><path d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 32px;
-        }
-
         .digital-clock {
             background: #0b1120;
             border: 1px solid var(--border-color);
@@ -187,33 +202,20 @@
             letter-spacing: 1px;
             color: var(--accent-color);
         }
-
-        /* ウェルカム画面（モーダル） */
-        #welcome-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(5, 8, 20, 0.98);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            padding: 20px;
-        }
     </style>
 </head>
-<body class="relative min-h-screen flex flex-col justify-between">
+<body class="relative min-h-screen flex flex-col justify-between" onclick="createBurst(event)">
 
-    <!-- ウェルカムモーダル -->
-    <div id="welcome-modal">
-        <div class="text-center space-y-6 max-w-md w-full p-8 sharp-card">
-            <h1 class="text-4xl font-black text-sky-400 tracking-wider animate-pulse">ようこそ！</h1>
-            <p class="text-slate-300 text-sm">space. へようこそ。</p>
-            <button class="sharp-btn text-base py-3 px-10 w-full" onclick="enterSite()">入る</button>
+    <!-- ウェルカム大画面モーダル -->
+    <div id="welcome-overlay">
+        <div class="sharp-card p-8 md:p-12 text-center max-w-sm w-full mx-4 border-2 border-sky-400 shadow-2xl">
+            <h1 class="text-3xl font-black text-sky-400 tracking-widest mb-4">ようこそ！</h1>
+            <p class="text-xs text-slate-300 mb-8 leading-relaxed">space. へようこそ。</p>
+            <button class="sharp-btn w-full py-3 text-base tracking-widest" onclick="enterSite(event)">入る</button>
         </div>
     </div>
 
-    <!-- 星の背景 -->
+    <!-- 星空背景の生成コンテナ -->
     <div class="stars-container" id="stars-container"></div>
 
     <!-- ヘッダー -->
@@ -231,29 +233,9 @@
             <nav class="flex flex-wrap items-center gap-2" id="main-nav">
                 <button class="nav-btn active" id="btn-about" onclick="showTab('about')">ABOUT</button>
                 <button class="nav-btn" id="btn-profile" onclick="showTab('profile')">PROFILE</button>
-                <button class="nav-btn" id="btn-message" onclick="showTab('message')">COMMENT</button>
-                <button class="nav-btn" id="btn-privacy" onclick="showTab('privacy')">PRIVACY</button>
+                <div id="dynamic-pages-nav" class="contents"></div>
+                <button class="nav-btn" id="btn-privacy" onclick="showTab('privacy')">TERMS & PRIVACY</button>
             </nav>
-
-            <div id="bell-widget" class="relative flex items-center bg-slate-900 border border-slate-700 p-1.5 pl-2.5 pr-1">
-                <button onclick="toggleBellNotification()" title="お知らせ" class="text-sky-400 hover:text-white transition flex items-center gap-1.5 focus:outline-none">
-                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                        <path d="M12 22a2.98 2.98 0 0 0 2.818-2H9.182A2.98 2.98 0 0 0 12 22zm7-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C8.64 5.36 7 7.92 7 11v5l-2 2v1h14v-1l-2-2z"/>
-                    </svg>
-                    <span class="w-2 h-2 bg-sky-400 rounded-full animate-ping"></span>
-                </button>
-                <button onclick="dismissBell()" title="非表示" class="ml-2 text-slate-500 hover:text-rose-400 px-1 font-bold text-xs focus:outline-none">
-                    ×
-                </button>
-
-                <div id="bell-popup" class="hidden absolute right-0 top-10 w-64 bg-slate-900 border border-sky-400 p-3 shadow-2xl z-50 text-xs">
-                    <div class="flex justify-between items-center border-b border-slate-800 pb-1 mb-2">
-                        <span class="font-bold text-sky-400">NOTIFICATION</span>
-                        <button onclick="toggleBellNotification()" class="text-slate-400 hover:text-white">✕</button>
-                    </div>
-                    <p class="text-slate-300 leading-relaxed">このサイトについてやプロフィール情報を確認できます。</p>
-                </div>
-            </div>
         </div>
     </header>
 
@@ -269,13 +251,13 @@
                 </div>
 
                 <div class="space-y-4 text-slate-200 text-base leading-relaxed">
-                    <p class="p-3 bg-slate-900/90 border-l-2 border-sky-400 font-semibold text-lg text-sky-400">
+                    <p class="p-3 bg-slate-900/90 border-l-2 border-sky-400 font-semibold">
                         ようこそ！
                     </p>
                     <p class="p-3 bg-slate-900/90 border-l-2 border-slate-600">
                         ずば抜けて得意なこともない、普通すぎる人です。
                     </p>
-                    <p class="p-3 bg-slate-900/90 border-l-2 border-slate-600">
+                    <p class="p-3 bg-slate-900/90 border-l-2 border-sky-400 font-semibold">
                         名前はkakuzatou、シュガー、NYO、エビフライなどなど。
                     </p>
 
@@ -291,39 +273,10 @@
             <div class="sharp-card p-6 md:p-10" id="profile-card-container"></div>
         </section>
 
-        <!-- 3. COMMENT -->
-        <section id="tab-message" class="tab-content">
-            <div class="sharp-card p-6 md:p-10">
-                <div class="border-b border-slate-800 pb-3 mb-6">
-                    <span class="text-xs font-bold text-sky-400 tracking-wider">COMMENTS</span>
-                    <h2 class="text-xl font-black text-white mt-1">コメント機能</h2>
-                </div>
+        <!-- 動的追加ページ用コンテナ -->
+        <div id="dynamic-pages-container"></div>
 
-                <!-- 管理者認証 -->
-                <div class="mb-6 p-4 bg-slate-900/90 border border-slate-800 text-xs">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                            <span class="font-bold text-slate-300">非公開コメント閲覧・返信（管理者認証）</span>
-                            <span id="master-status-badge" class="ml-2 px-2 py-0.5 bg-slate-800 text-slate-400 font-bold">未認証</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <input type="password" id="master-key-input" placeholder="パスワードを入力" class="sharp-input w-40 text-xs py-1">
-                            <button class="sharp-btn text-xs py-1 px-3" onclick="verifyMasterKey()">認証</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- コメントフォーム -->
-                <div id="comment-form-container" class="mb-10"></div>
-
-                <div>
-                    <h3 class="text-xs font-bold text-sky-400 tracking-wider mb-4 border-l-2 border-sky-400 pl-2">コメント一覧</h3>
-                    <div id="comments-list" class="space-y-4"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 4. PRIVACY -->
+        <!-- 3. PRIVACY -->
         <section id="tab-privacy" class="tab-content">
             <div class="sharp-card p-6 md:p-10">
                 <div class="border-b border-slate-800 pb-3 mb-6">
@@ -339,13 +292,8 @@
                     </section>
 
                     <section>
-                        <h3 class="text-sm font-bold text-white mb-2">2. コメントの公開範囲について</h3>
-                        <p>「パブリック」で投稿されたコメントは誰でも閲覧可能です。「プライベート」で投稿されたコメントは、特定の管理パスワードを認識した閲覧者のみに限定して表示されます。</p>
-                    </section>
-
-                    <section>
-                        <h3 class="text-sm font-bold text-white mb-2">3. ローカルストレージの使用</h3>
-                        <p>当サイトでは、サイト内の設定データや送信したコメント情報の管理のために、お使いのブラウザのローカルストレージ（Local Storage）を使用する場合があります。</p>
+                        <h3 class="text-sm font-bold text-white mb-2">2. ローカルストレージの使用</h3>
+                        <p>当サイトでは、サイト内の設定データの管理のために、お使いのブラウザのローカルストレージ（Local Storage）を使用する場合があります。</p>
                     </section>
                 </div>
             </div>
@@ -353,11 +301,13 @@
 
     </main>
 
+    <!-- フッター -->
     <footer class="relative z-10 w-full py-4 border-t border-slate-800 bg-slate-950 text-center text-xs text-slate-500 font-mono">
         ©︎kakuzatou
     </footer>
 
     <script>
+        // プロフィール初期設定値
         const defaultProfile = {
             name: "kakuzatou",
             color: "#38bdf8",
@@ -379,12 +329,66 @@
                 { name: "NARI Top", url: "https://nari.oz96.com/" },
                 { name: "NARI マイページ", url: "https://nari.oz96.com/users/244452" },
                 { name: "NARI サブ垢（個チャしたい人用）", url: "https://nari.oz96.com/users/237928" }
-            ]
+            ],
+            extraPages: []
         };
 
-        // 背景の星を生成
+        // 星キラキラ粒子の破裂エフェクト生成
+        function createBurst(e) {
+            const x = e.clientX || (e.touches && e.touches[0].clientX) || (window.innerWidth / 2);
+            const y = e.clientY || (e.touches && e.touches[0].clientY) || (window.innerHeight / 2);
+
+            for (let i = 0; i < 12; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'burst-particle';
+                const size = Math.random() * 4 + 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 60 + 20;
+                const dx = `${Math.cos(angle) * distance}px`;
+                const dy = `${Math.sin(angle) * distance}px`;
+
+                particle.style.setProperty('--dx', dx);
+                particle.style.setProperty('--dy', dy);
+
+                document.body.appendChild(particle);
+
+                setTimeout(() => {
+                    particle.remove();
+                }, 700);
+            }
+        }
+
+        // 入るボタンを押してメイン画面を表示
+        function enterSite(e) {
+            if (e) e.stopPropagation();
+            const overlay = document.getElementById('welcome-overlay');
+            if (overlay) {
+                overlay.classList.add('hidden-overlay');
+            }
+        }
+
+        // 文字化け（難読化）アニメーション関数
+        const obfuscatedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
+        function animateObfuscatedText() {
+            document.querySelectorAll('.obfuscated').forEach(el => {
+                const len = parseInt(el.getAttribute('data-length') || '2', 10);
+                let randomText = '';
+                for (let i = 0; i < len; i++) {
+                    randomText += obfuscatedChars.charAt(Math.floor(Math.random() * obfuscatedChars.length));
+                }
+                el.textContent = randomText;
+            });
+        }
+        setInterval(animateObfuscatedText, 50);
+
+        // 背景の星を増量してランダム生成（100個）
         const starsContainer = document.getElementById('stars-container');
-        for (let i = 0; i < 90; i++) {
+        for (let i = 0; i < 100; i++) {
             const star = document.createElement('div');
             star.className = 'star';
             const size = Math.random() * 2.5 + 1;
@@ -392,54 +396,12 @@
             star.style.height = `${size}px`;
             star.style.top = `${Math.random() * 100}%`;
             star.style.left = `${Math.random() * 100}%`;
-            star.style.setProperty('--duration', `${Math.random() * 3 + 2}s`);
+            star.style.setProperty('--duration', `${Math.random() * 3 + 1.5}s`);
             star.style.animationDelay = `${Math.random() * 3}s`;
             starsContainer.appendChild(star);
         }
 
-        // クリック/タップ時に星を発散させるエフェクト
-        document.addEventListener('click', (e) => {
-            createStarBurst(e.clientX, e.clientY);
-        });
-
-        function createStarBurst(x, y) {
-            const count = 8;
-            for (let i = 0; i < count; i++) {
-                const star = document.createElement('div');
-                star.className = 'click-star';
-                const size = Math.random() * 4 + 2;
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.left = `${x}px`;
-                star.style.top = `${y}px`;
-
-                const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
-                const distance = Math.random() * 40 + 20;
-                const dx = `${Math.cos(angle) * distance}px`;
-                const dy = `${Math.sin(angle) * distance}px`;
-
-                star.style.setProperty('--dx', dx);
-                star.style.setProperty('--dy', dy);
-
-                document.body.appendChild(star);
-                setTimeout(() => star.remove(), 800);
-            }
-        }
-
-        function enterSite() {
-            const modal = document.getElementById('welcome-modal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        function toggleBellNotification() {
-            const popup = document.getElementById('bell-popup');
-            if (popup) popup.classList.toggle('hidden');
-        }
-        function dismissBell() {
-            const bellWidget = document.getElementById('bell-widget');
-            if (bellWidget) bellWidget.style.display = 'none';
-        }
-
+        // 時計表示切り替え・更新
         let clockExpanded = true;
         function updateClock() {
             const n = new Date(),
@@ -460,20 +422,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // 文字化けアニメーション
-        const obfuscatedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
-        function animateObfuscatedText() {
-            document.querySelectorAll('.obfuscated').forEach(el => {
-                const len = parseInt(el.getAttribute('data-length') || '2', 10);
-                let randomText = '';
-                for (let i = 0; i < len; i++) {
-                    randomText += obfuscatedChars.charAt(Math.floor(Math.random() * obfuscatedChars.length));
-                }
-                el.textContent = randomText;
-            });
-        }
-        setInterval(animateObfuscatedText, 50);
-
+        // タブ切り替え制御
         function showTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -487,6 +436,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        // プロフィールカードの動的描画
         function renderProfileCard(data) {
             const container = document.getElementById('profile-card-container');
             const themeColor = data.color || '#38bdf8';
@@ -499,9 +449,9 @@
                         <h3 class="text-xs font-bold tracking-wider mb-3 border-l-2 pl-2" style="color:${themeColor}; border-color:${themeColor};">詳細情報</h3>
                         <div class="bg-slate-900/60 p-4 border border-slate-800 space-y-3 text-xs">
                             ${data.fields.map(f => `
-                                <div class="flex flex-col sm:flex-row justify-between border-b border-slate-800 pb-2 gap-1">
-                                    <span class="text-slate-400 font-bold">${escapeHtml(f.label)}</span>
-                                    <span class="text-slate-200">${escapeHtml(f.value)}</span>
+                                <div class="flex justify-between border-b border-slate-800 pb-2">
+                                    <span class="text-slate-400">${escapeHtml(f.label)}</span>
+                                    <span class="text-slate-200 font-semibold">${escapeHtml(f.value)}</span>
                                 </div>
                             `).join('')}
                         </div>
@@ -525,7 +475,7 @@
 
             container.innerHTML = `
                 <div class="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8 pb-6 border-b border-slate-800">
-                    <img src="${escapeHtml(data.avatar)}" 
+                    <img src="${escapeHtml(data.avatar || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300')}" 
                          alt="${escapeHtml(data.name)}" 
                          class="avatar-square"
                          style="border-color:${themeColor};"
@@ -553,15 +503,15 @@
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">血液型</span>
-                            <span class="font-bold text-slate-200">${escapeHtml(data.blood)}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.blood || '')}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">居住地</span>
-                            <span class="font-bold text-slate-200">${escapeHtml(data.location)}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.location || '')}</span>
                         </div>
                         <div class="bg-slate-900/90 p-3 border border-slate-800 flex justify-between">
                             <span class="text-slate-400">メインアクティビティ</span>
-                            <span class="font-bold text-slate-200">${escapeHtml(data.activity)}</span>
+                            <span class="font-bold text-slate-200">${escapeHtml(data.activity || '')}</span>
                         </div>
                     </div>
                 </div>
@@ -571,194 +521,15 @@
             `;
         }
 
-        let isMasterAuthenticated = false;
-        function verifyMasterKey() {
-            const keyInput = document.getElementById('master-key-input').value;
-            const badge = document.getElementById('master-status-badge');
-
-            if (keyInput === 'syokuyounousi') {
-                isMasterAuthenticated = true;
-                localStorage.setItem('master_auth', 'true');
-                badge.textContent = '認証済み (管理者)';
-                badge.className = 'ml-2 px-2 py-0.5 bg-sky-900 text-sky-200 font-bold';
-                document.getElementById('master-key-input').value = '';
-                alert('認証成功');
-                loadComments();
-            } else {
-                alert('パスワードが違います');
-            }
-        }
-
-        function checkMasterAuthStatus() {
-            if (localStorage.getItem('master_auth') === 'true') {
-                isMasterAuthenticated = true;
-                const badge = document.getElementById('master-status-badge');
-                if (badge) {
-                    badge.textContent = '認証済み (管理者)';
-                    badge.className = 'ml-2 px-2 py-0.5 bg-sky-900 text-sky-200 font-bold';
-                }
-            }
-        }
-
-        function renderCommentForm() {
-            const container = document.getElementById('comment-form-container');
-            container.innerHTML = `
-                <form id="comment-form" class="space-y-4 bg-slate-900/60 p-5 border border-slate-800 text-xs">
-                    <div>
-                        <label class="block font-bold text-slate-300 mb-1">お名前 / どこのサイトの誰か <span class="text-rose-500 font-bold">*</span></label>
-                        <input type="text" id="cmt-identity" required placeholder="例: UWUZUの〇〇" class="sharp-input">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-300 mb-1">ユーザーURL</label>
-                        <input type="url" id="cmt-url" class="sharp-input">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-300 mb-1">公開設定</label>
-                        <select id="cmt-visibility" class="sharp-input bg-slate-900">
-                            <option value="public">パブリック (全員に表示)</option>
-                            <option value="private">プライベート (管理者のみ)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-300 mb-1">本文 <span class="text-rose-500 font-bold">*</span></label>
-                        <textarea id="cmt-body" rows="4" required class="sharp-input resize-y"></textarea>
-                    </div>
-                    <button type="submit" class="sharp-btn w-full py-2">コメント送信</button>
-                </form>
-            `;
-            document.getElementById('comment-form').addEventListener('submit', handleCommentSubmit);
-        }
-
-        function handleCommentSubmit(e) {
-            e.preventDefault();
-
-            const identity = document.getElementById('cmt-identity').value.trim();
-            const url = document.getElementById('cmt-url').value.trim();
-            const visibility = document.getElementById('cmt-visibility').value;
-            const body = document.getElementById('cmt-body').value.trim();
-            if (!identity || !body) return;
-
-            const now = new Date();
-            const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-            const newComment = {
-                id: Date.now().toString(),
-                author: identity,
-                identity: identity,
-                url: url,
-                visibility: visibility,
-                body: body,
-                date: dateStr,
-                replies: []
-            };
-
-            const comments = JSON.parse(localStorage.getItem('site_comments') || '[]');
-            comments.unshift(newComment);
-            localStorage.setItem('site_comments', JSON.stringify(comments));
-
-            loadComments();
-            renderCommentForm();
-        }
-
-        function loadComments() {
-            const listEl = document.getElementById('comments-list');
-            const comments = JSON.parse(localStorage.getItem('site_comments') || '[]');
-
-            if (comments.length === 0) {
-                listEl.innerHTML = `<div class="p-6 text-center border border-dashed border-slate-800 text-slate-500 text-xs">コメントはまだありません。</div>`;
-                return;
-            }
-
-            let html = '';
-            comments.forEach(cmt => {
-                const isPrivate = cmt.visibility === 'private';
-                if (isPrivate && !isMasterAuthenticated) {
-                    html += `<div class="bg-slate-900/40 p-4 border border-slate-800/80 text-xs"><span class="text-slate-500 italic">[ 非公開コメント ]</span></div>`;
-                    return;
-                }
-
-                let repliesHtml = '';
-                if (cmt.replies && cmt.replies.length > 0) {
-                    repliesHtml = `
-                        <div class="mt-3 pl-4 border-l-2 border-sky-400 space-y-2">
-                            ${cmt.replies.map(r => `
-                                <div class="bg-slate-950 p-3 border border-slate-800">
-                                    <div class="flex justify-between items-center mb-1">
-                                        <span class="font-bold text-sky-400">[ 管理者返信 ]</span>
-                                        <span class="text-slate-500 text-[10px] font-mono">${r.date}</span>
-                                    </div>
-                                    <p class="text-slate-200 whitespace-pre-wrap">${escapeHtml(r.body)}</p>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
-                }
-
-                html += `
-                    <div class="bg-slate-900/80 p-4 border border-slate-800 text-xs space-y-3">
-                        <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-2">
-                            <div>
-                                <span class="font-bold text-sky-400">[ ${escapeHtml(cmt.author)} ]</span>
-                                ${cmt.url ? `<a href="${escapeHtml(cmt.url)}" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:underline ml-2">URL</a>` : ''}
-                                ${isPrivate ? '<span class="ml-2 px-1.5 py-0.5 bg-rose-950 text-rose-400 font-bold border border-rose-800">プライベート</span>' : ''}
-                            </div>
-                            <span class="text-slate-500 font-mono">${cmt.date}</span>
-                        </div>
-                        <p class="text-slate-200 whitespace-pre-wrap leading-relaxed">${escapeHtml(cmt.body)}</p>
-                        ${repliesHtml}
-                        ${isMasterAuthenticated ? `
-                            <div class="pt-2 border-t border-slate-800 flex justify-end">
-                                <button class="sharp-btn text-xs py-1 px-3" onclick="showReplyForm('${cmt.id}')">返信</button>
-                            </div>
-                            <div id="reply-form-${cmt.id}" class="hidden pt-2 space-y-2">
-                                <textarea id="reply-body-${cmt.id}" rows="2" placeholder="返信内容を入力..." class="sharp-input text-xs"></textarea>
-                                <div class="flex justify-end gap-2">
-                                    <button class="sharp-btn text-xs py-1 px-3" onclick="submitReply('${cmt.id}')">送信</button>
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            });
-            listEl.innerHTML = html;
-        }
-
-        function showReplyForm(commentId) {
-            const el = document.getElementById(`reply-form-${commentId}`);
-            if (el) el.classList.toggle('hidden');
-        }
-
-        function submitReply(commentId) {
-            const bodyInput = document.getElementById(`reply-body-${commentId}`);
-            const body = bodyInput ? bodyInput.value.trim() : '';
-            if (!body) return;
-
-            const now = new Date();
-            const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-            let comments = JSON.parse(localStorage.getItem('site_comments') || '[]');
-            const index = comments.findIndex(c => c.id === commentId);
-            if (index !== -1) {
-                if (!comments[index].replies) comments[index].replies = [];
-                comments[index].replies.push({
-                    body: body,
-                    date: dateStr
-                });
-                localStorage.setItem('site_comments', JSON.stringify(comments));
-                loadComments();
-            }
-        }
-
+        // エスケープ処理
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
+        // 初期化処理
         window.addEventListener('DOMContentLoaded', () => {
             renderProfileCard(defaultProfile);
-            checkMasterAuthStatus();
-            renderCommentForm();
-            loadComments();
         });
     </script>
 </body>
